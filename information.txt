@@ -1,0 +1,15 @@
+print nc
+{
+  "platform": "", 
+  "user_id": "", 
+  "channel_name": "", 
+  "auth_info": {
+    "save_token_file": "(default)", 
+    "callback_url": "http://snsapi.sinaapp.com/auth.php", 
+    "cmd_fetch_code": "(default)", 
+    "cmd_request_url": "(default)"
+  }, 
+  "app_secret": "", 
+  "open": "yes", 
+  "app_key": ""
+}

@@ -38,7 +38,12 @@
 
 <ChannelView>:
 	
-	on_channel_content: app.set_channel_content(self.channel_index, self.channel_content)
+	on_channel_content: app.set_channel_content(self.channel_index, self.channel_content,'content')
+	on_channel_platform: app.set_channel_content(self.channel_index, self.channel_platform,'platform')
+	on_channel_name: app.set_channel_content(self.channel_index, self.channel_name,'name')
+	on_channel_app_secret: app.set_channel_content(self.channel_index, self.channel_app_secret,'app_secret')
+	on_channel_app_key: app.set_channel_content(self.channel_index, self.channel_app_key,'app_key')
+	on_channel_callback_url: app.set_channel_content(self.channel_index, self.channel_callback_url,'callback_url')
 	on_channel_title: app.set_channel_title(self.channel_index, self.channel_title)
 	
     BoxLayout:
@@ -67,7 +72,7 @@
 
 			MutableLabelTextInput:
 				text: root.channel_title
-				font_size: '16sp'
+				font_size: '12sp'
 				multiline: False
 				on_text: root.channel_title = self.text
 
@@ -76,10 +81,73 @@
 				size_hint_x: None
 				width: self.height
 				on_release: app.del_channel(root.channel_index)
+		
+		BoxLayout:
+		
+			orientation: 'horizontal'
+			padding:'20sp'
+			
+			BoxLayout:
+				orientation: 'vertical'
+				size_hint_x: 0.3
 				
-		MutableRstDocumentTextInput:
-            text: root.channel_content
-			on_text: root.channel_content = self.text
+				Label:
+					font_size: '12sp'
+					text: 'platform'
+					
+				Label:
+					font_size: '12sp'
+					text: 'channel name'
+					
+				Label:
+					font_size: '12sp'
+					text: 'app secret'
+					
+				Label:
+					font_size: '12sp'
+					text: 'app key'
+					
+				Label:
+					font_size: '12sp'
+					text: 'callback url'
+			
+			BoxLayout:
+				orientation: 'vertical'
+				size_hint_x: 0.7
+				
+				TextInput:
+					id: w_platform
+					multiline: False
+					text: root.channel_platform
+					on_text: root.channel_platform = self.text
+					
+				TextInput:
+					id: w_channel_name
+					multiline: False
+					text: root.channel_name
+					on_text: root.channel_name = self.text
+					
+				TextInput:
+					id: w_app_secret
+					multiline: False
+					text: root.channel_app_secret
+					on_text: root.channel_app_secret = self.text
+					
+				TextInput:
+					id: w_app_key
+					multiline: False
+					text: root.channel_app_key
+					on_text: root.channel_app_key = self.text
+					
+				TextInput:
+					id: w_callback_url
+					multiline: False
+					text: root.channel_callback_url
+					on_text: root.channel_callback_url = self.text
+
+				#MutableRstDocumentTextInput:
+				#text: root.channel_content
+				#on_text: root.channel_content = self.text
 			
 <ChannelListItem>:
 	height: '48sp'

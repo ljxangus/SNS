@@ -50,7 +50,33 @@ class MutableTextInput(FloatLayout):
         if not textinput.focus:
             self.text = textinput.text
             self.view()
+'''            
+class MyTextInput:
 
+    text = StringProperty()
+    multiline = BooleanProperty(True)
+
+    def __init__(self, **kwargs):
+        super(MyTextInput, self).__init__(**kwargs)
+        Clock.schedule_once(self.prepare, 0)
+		
+    def prepare(self,*args):
+	self.w_textinput = self.ids.w_textinput.__self__
+        self.w_label = self.ids.w_label.__self__
+	
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos) and touch.is_double_tap:
+            self.edit()
+            return True
+        return super(MutableTextInput, self).on_touch_down(touch)
+		
+    def edit(self):
+        self.w_textinput.focus = True
+		
+    def check_focus_and_view(self, textinput):
+        if not textinput.focus:
+            self.text = textinput.text
+'''
 class SNSView(Screen):
 
     sns_index = NumericProperty()
@@ -63,6 +89,12 @@ class ChannelView(Screen):
     channel_index = NumericProperty()
     channel_title = StringProperty()
     channel_content = StringProperty()
+    
+    channel_platform = StringProperty()
+    channel_name = StringProperty()
+    channel_app_secret = StringProperty()
+    channel_app_key = StringProperty()
+    channel_callback_url = StringProperty()
 
 class StatusBar(BoxLayout):
     time_str = StringProperty()
@@ -94,7 +126,12 @@ class Channel(Screen):
         return {
             'channel_index': row_index,
             'channel_content': item['content'],
-            'channel_title': item['title']}
+            'channel_title': item['title'],
+            'channel_platform': item['platform'],
+            'channel_name': item['name'],
+            'channel_app_secret': item['app_secret'],
+            'channel_app_key': item['app_key'],
+            'channel_callback_url': item['callback_url']}
 
 class SNS(Screen):
     snsdata = ListProperty()
@@ -150,16 +187,28 @@ class SNSApp(App):
             name=name,
             channel_index=channel_index,
             channel_title=channel.get('title'),
-            channel_content=channel.get('content'))
+            channel_content=channel.get('content'),
+            channel_platform=channel.get('platform'),
+            channel_name=channel.get('name'),
+            channel_app_secret=channel.get('app_secret'),
+            channel_app_key=channel.get('app_key'),
+            channel_callback_url=channel.get('callback_url'))
 	
 	self.root.add_widget(view)
         self.transition.direction = 'left'
         self.root.current = view.name            
 		
     def add_channel(self):
-	self.sns.channeldata.append({'title': 'New Channel', 'content': ''})
+	self.sns.channeldata.append({'title': 'New Channel',
+                                     'content': '',
+                                     'platform':'',
+                                     'name':'',
+                                     'app_secret':'',
+                                     'app_key':'',
+                                     'callback_url':''})
 	channel_index = len(self.sns.channeldata) - 1
 	self.edit_channel(channel_index)
+	
 #channelinformation needed
 	
     def view_channel(self):
@@ -174,8 +223,8 @@ class SNSApp(App):
         self.transition.direction = 'left'
         self.root.current = view.name
 			
-    def set_channel_content(self, channel_index, channel_content):
-	self.sns.channeldata[channel_index]['content'] = channel_content
+    def set_channel_content(self, channel_index, channel_content, content):
+	self.sns.channeldata[channel_index][content] = channel_content
 	channeldata = self.sns.channeldata
 	self.sns.channeldata = []
 	self.sns.channeldata = channeldata
