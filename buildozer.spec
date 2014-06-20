@@ -1,13 +1,13 @@
 [app]
 
 # (str) Title of your application
-title = Notes
+title = SNSApp
 
 # (str) Package name
-package.name = notes
+package.name = snsapp
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.test
+package.domain = org.demo
 
 # (str) Source code where the main.py live
 source.dir = .
@@ -32,10 +32,10 @@ requirements = kivy,docutils
 presplash.filename = %(source.dir)s/data/icon.png
 
 # (str) Icon of the application
-#icon.filename = %(source.dir)s/data/icon.png
+icon.filename = %(source.dir)s/data/icon.png
 
 # (str) Supported orientation (one of landscape, portrait or all)
-orientation = landscape
+orientation = portrait
 
 # (bool) Indicate if the application should be fullscreen or not
 fullscreen = 1

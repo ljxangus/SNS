@@ -1,0 +1,75 @@
+<ChannelListItem>:
+	height: '48sp'
+	size_hint_y: None
+	canvas:
+        Color:
+            rgb: .3, .3, .3
+        Rectangle:
+            pos: self.pos
+            size: self.width, 1
+
+	BoxLayout:
+		padding: '5dp'
+		Label:
+			text: root.channel_name
+
+		Button:
+			text: '>'
+			size_hint_x: None
+			width: self.height
+			on_release: app.edit_channel(root.channel_index,root.channel_platform)
+			
+<Channel>:
+
+    BoxLayout:
+
+        orientation: 'vertical'
+
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: None
+			height: '48dp'
+			padding: '5dp'
+
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+					
+			Button:
+				text: '<'
+				font_size: '10sp'
+				size_hint_x: None
+				width: self.height
+				on_release: app.go_sns()
+				
+			Label:
+				text: 'Channel List'
+				font_size: '16sp'
+				
+			Image:
+				source: 'data/icon.png'
+				mipmap: True
+				size_hint_x: None
+				width: self.height	
+
+        ListView:
+            adapter: ListAdapter(data=root.channeldata, cls=Factory.ChannelListItem, args_converter=root.channel_args_converter)
+		
+		AnchorLayout:
+			anchor_x: 'center'
+			anchor_y: 'bottom'
+			BoxLayout:
+				orientation: 'vertical'
+				ChannelGeneralOptions:
+					id: _channel_options
+					size_hint: 1,None
+					height: 50
+				StatusBar:
+					id: _status_bar
+					size_hint: 1,None
+					height: 50
+					

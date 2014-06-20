@@ -1,0 +1,114 @@
+#-*- coding:utf-8 -*-
+<SNSListItem@SelectableView>:
+	height: '80dp'
+	canvas:
+        Color:
+            rgb: .3, .3, .3
+        Rectangle:
+            pos: self.pos
+            size: self.width, 1
+	BoxLayout:
+		orientation:'vertical'
+		padding:'4dp'
+	
+		Label:
+			text: root.sns_title
+			text_size:self.width-10, None
+			font_size:'12sp'
+			font_name:"fonts/DroidSansFallback.ttf"
+			bold: True
+			size_hint_y: .2
+
+		GridLayout:
+			id:w_sns_gridlayout
+			cols: 2
+			row_force_default: True
+			row_default_height: 40
+			padding:'2dp'
+	
+			Label:
+				text: root.sns_content
+				text_size:self.width-10, None
+				font_size:'12sp'
+				font_name:"fonts/DroidSansFallback.ttf"
+				shorten:False
+				max_lines:4
+			Image:
+				size_hint_x: None
+				source: 'data/like.png'
+				mipmap: True
+				width: 10
+			
+<SNS>:
+	GridLayout:
+		cols:1
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: .07
+			#height: '48dp'
+			padding: '1dp'
+
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+
+			Image:
+				source: 'data/icon.png'
+				mipmap: True
+				size_hint_x: None
+				width: self.height
+
+			Label:
+				text: 'SNS Reader'
+				font_size: '10sp'
+				font_name:"fonts/DroidSansFallback.ttf"
+				bold:True
+
+			Spinner:
+				id: _channel_spinner
+				font_size: '10sp'
+				text: 'All Platform'
+				font_name:"fonts/DroidSansFallback.ttf"
+
+			Button:
+				text: 'More Status'
+				font_size: '8sp'
+				size_hint_x: None
+				#width: self.height*2
+				on_release: root.more_status()
+
+			Button:
+				text: 'Refresh'
+				font_size: '8sp'
+				size_hint_x: None
+				#width: self.height*2
+				on_release: root.refresh_status()
+		BoxLayout:
+			orientation: 'horizontal'
+			size_hint_y: .9
+			ListView:
+				adapter: ListAdapter(data=root.snsdata, cls=Factory.SNSListItem, args_converter=root.sns_args_converter)
+		
+		AnchorLayout:
+			anchor_x: 'center'
+			anchor_y: 'bottom'
+			size_hint_y:.1
+			
+			BoxLayout:
+				orientation: 'vertical'
+				GeneralOptions:
+					id: _general_options
+					size_hint: 1,None
+					height: 30
+
+					
+				StatusBar:
+					id: _status_bar
+					size_hint: 1,None
+					height: 30
+
+	

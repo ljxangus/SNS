@@ -1,0 +1,139 @@
+<UpdateStatus>:	
+    BoxLayout:
+
+		orientation: 'vertical'
+
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: None
+			height: '48dp'
+			padding: '5dp'
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+			Button:
+				text: 'X'
+				size_hint_x: None
+				width: self.height
+				on_release: app.go_sns_quietly()
+
+			Label:
+				id:in_up_st
+				text: 'Update Status to ' + app.sns.current_channel_intext
+				font_size: '16sp'
+
+			Button:
+				text: 'Post'
+				size_hint_x: None
+				width: self.height
+				on_release: app.update_status(root.post_content)
+				on_release: app.go_sns_quietly()
+		TextInput:
+			font_name:"fonts/DroidSansFallback.ttf"
+			text: ''
+			on_text: root.post_content = self.text
+			hint_text:'What are you thinking about...?'
+
+<ForwardStatus>:	
+    BoxLayout:
+
+		orientation: 'vertical'
+
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: None
+			height: '48dp'
+			padding: '5dp'
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+			Button:
+				text: 'X'
+				size_hint_x: None
+				width: self.height
+				on_release: app.go_sns_quietly()
+
+			Label:
+
+				text: 'Forward Status to ' + app.sns.current_channel_intext
+				font_size: '16sp'
+
+			Button:
+				text: 'Forward'
+				size_hint_x: None
+				width: self.height * 2
+				on_release: app.forward_status(root.original_message,root.text)
+				on_release: app.go_sns_quietly()
+		Label:
+			font_name:"fonts/DroidSansFallback.ttf"
+			font_size:'10sp'
+			text: root.message
+			text_size:self.width-10, None
+			multiline:True
+			shorten:False
+			max_lines:3
+			size_hint_y:0.4
+
+		TextInput:
+			font_name:"fonts/DroidSansFallback.ttf"
+			text: root.text
+			on_text: root.text = self.text
+			hint_text:'forward'
+
+<ReplyStatus>:	
+    BoxLayout:
+
+		orientation: 'vertical'
+
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: None
+			height: '48dp'
+			padding: '5dp'
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+			Button:
+				text: 'X'
+				size_hint_x: None
+				width: self.height
+				on_release: app.go_sns_quietly()
+
+			Label:
+				text: 'Reply Status to ' + app.sns.current_channel_intext
+				font_size: '16sp'
+
+			Button:
+				text: 'Reply'
+				size_hint_x: None
+				width: self.height * 2
+				on_release: app.reply_status(root.original_message,root.text)
+				on_release: app.go_sns_quietly()
+
+		Label:
+			font_name:"fonts/DroidSansFallback.ttf"
+			font_size:'10sp'
+			text: root.message
+			text_size:self.width-10, None
+			multiline:True
+			shorten:False
+			max_lines:3
+			size_hint_y:0.4
+
+		TextInput:
+			font_name:"fonts/DroidSansFallback.ttf"
+			text: root.text
+			on_text: root.text = self.text
+			hint_text:'Reply to this status'

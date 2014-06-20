@@ -1,0 +1,26 @@
+<PickPlatformView>:
+	
+	BoxLayout:
+		orientation: 'vertical'
+		
+		Button:
+			text: 'RSS'
+			on_release: app.edit_channel(root.channel_index,'RSS')
+		Button:
+			text: 'SinaWeibo'
+			on_release: app.edit_channel(root.channel_index,'SinaWeibo')
+		Button:
+			text: 'RenrenBlog'
+			on_release: app.edit_channel(root.channel_index,'RenrenBlog')
+		Button:
+			text: 'RenrenShare'
+			on_release: app.edit_channel(root.channel_index,'RenrenShare')
+		Button:
+			text: 'RenrenStatus'
+			on_release: app.edit_channel(root.channel_index,'RenrenStatus')
+		Button:
+			text: 'TencentWeiboStatus'
+			on_release: app.edit_channel(root.channel_index,'TencentWeiboStatus')
+		Button:
+			text: 'TwitterStatus'
+			on_release: app.edit_channel(root.channel_index,'TwitterStatus')

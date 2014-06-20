@@ -1,0 +1,351 @@
+#:kivy 1.7.1
+#:import ListAdapter kivy.adapters.listadapter.ListAdapter
+#:import Factory kivy.factory.Factory
+
+<Screen>:
+	canvas:
+		Color:
+			rgb: .6, .6, .6
+		Rectangle:
+			size: self.size
+			source: 'data/background.png'
+
+<MutableLabelTextInput@MutableTextInput>:
+	Label:
+		id: w_label
+		pos: root.pos
+		text: root.text
+
+	TextInput:
+		id: w_textinput
+		pos: root.pos
+		text: root.text
+		multiline: root.multiline
+		on_focus: root.check_focus_and_view(self)
+		
+<MutableRstDocumentTextInput@MutableTextInput>:
+	RstDocument:
+		id: w_label
+		pos: root.pos
+		text: root.text
+
+	TextInput:
+		id: w_textinput
+		pos: root.pos
+		text: root.text
+		multiline: root.multiline
+		on_focus: root.check_focus_and_view(self)
+		
+
+<ChannelView>:
+	
+	on_channel_content: app.set_channel_content(self.channel_index, self.channel_content,'content')
+	on_channel_platform: app.set_channel_content(self.channel_index, self.channel_platform,'platform')
+	on_channel_name: app.set_channel_content(self.channel_index, self.channel_name,'name')
+	on_channel_app_secret: app.set_channel_content(self.channel_index, self.channel_app_secret,'app_secret')
+	on_channel_app_key: app.set_channel_content(self.channel_index, self.channel_app_key,'app_key')
+	on_channel_callback_url: app.set_channel_content(self.channel_index, self.channel_callback_url,'callback_url')
+	on_channel_title: app.set_channel_title(self.channel_index, self.channel_title)
+	
+    BoxLayout:
+
+		orientation: 'vertical'
+
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: None
+			height: '48dp'
+			padding: '5dp'
+
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+			
+			Button:
+				text: '<'
+				size_hint_x: None
+				width: self.height
+				on_release: app.go_channel()
+
+			MutableLabelTextInput:
+				text: root.channel_title
+				font_size: '12sp'
+				multiline: False
+				on_text: root.channel_title = self.text
+
+			Button:
+				text: 'X'
+				size_hint_x: None
+				width: self.height
+				on_release: app.del_channel(root.channel_index)
+		
+		BoxLayout:
+		
+			orientation: 'horizontal'
+			padding:'20sp'
+			
+			BoxLayout:
+				orientation: 'vertical'
+				size_hint_x: 0.3
+				
+				Label:
+					font_size: '15sp'
+					text: 'platform'
+					
+				Label:
+					font_size: '15sp'
+					text: 'channel name'
+					
+				Label:
+					font_size: '15sp'
+					text: 'app secret'
+					
+				Label:
+					font_size: '15sp'
+					text: 'app key'
+					
+				Label:
+					font_size: '15sp'
+					text: 'callback url'
+			
+			BoxLayout:
+				orientation: 'vertical'
+				size_hint_x: 0.7
+				
+				TextInput:
+					id: w_platform
+					multiline: False
+					text: root.channel_platform
+					on_text: root.channel_platform = self.text
+					
+				TextInput:
+					id: w_channel_name
+					multiline: False
+					text: root.channel_name
+					on_text: root.channel_name = self.text
+					
+				TextInput:
+					id: w_app_secret
+					multiline: False
+					text: root.channel_app_secret
+					on_text: root.channel_app_secret = self.text
+					
+				TextInput:
+					id: w_app_key
+					multiline: False
+					text: root.channel_app_key
+					on_text: root.channel_app_key = self.text
+					
+				TextInput:
+					id: w_callback_url
+					multiline: False
+					text: root.channel_callback_url
+					on_text: root.channel_callback_url = self.text
+
+				#MutableRstDocumentTextInput:
+				#text: root.channel_content
+				#on_text: root.channel_content = self.text
+			
+<ChannelListItem>:
+	height: '48sp'
+    size_hint_y: None
+	canvas:
+        Color:
+            rgb: .3, .3, .3
+        Rectangle:
+            pos: self.pos
+            size: self.width, 1
+
+    BoxLayout:
+
+        padding: '5dp'
+
+        Label:
+            text: root.channel_title
+
+        Button:
+            text: '>'
+            size_hint_x: None
+            width: self.height
+			on_release: app.edit_channel(root.channel_index,root.channel_platform)
+			
+<SNSListItem>:
+	height: '48sp'
+    size_hint_y: None
+	canvas:
+        Color:
+            rgb: .3, .3, .3
+        Rectangle:
+            pos: self.pos
+            size: self.width, 1
+
+    BoxLayout:
+
+        padding: '5dp'
+
+        Label:
+            text: root.sns_title
+
+        Button:
+            text: '>'
+            size_hint_x: None
+            width: self.height
+			
+<SNS>:
+
+    BoxLayout:
+
+        orientation: 'vertical'
+
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: None
+			height: '48dp'
+			padding: '5dp'
+
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+
+			Image:
+				source: 'data/icon.png'
+				mipmap: True
+				size_hint_x: None
+				width: self.height
+
+			Label:
+				text: 'SNS Reader'
+				font_size: '16sp'
+
+			Button:
+				text: 'Refresh'
+				font_size: '10sp'
+				size_hint_x: None
+				width: self.height
+
+        ListView:
+            adapter: ListAdapter(data=root.snsdata, cls=Factory.SNSListItem, args_converter=root.sns_args_converter)
+		
+		AnchorLayout:
+			anchor_x: 'center'
+			anchor_y: 'bottom'
+			BoxLayout:
+				orientation: 'vertical'
+				GeneralOptions:
+					id: _general_options
+					size_hint: 1,None
+					height: 60
+				StatusBar:
+					id: _status_bar
+					size_hint: 1,None
+					height: 24
+					
+<Channel>:
+
+    BoxLayout:
+
+        orientation: 'vertical'
+
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: None
+			height: '48dp'
+			padding: '5dp'
+
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+					
+			Button:
+				text: '<'
+				font_size: '10sp'
+				size_hint_x: None
+				width: self.height
+				on_release: app.go_sns()
+				
+			Label:
+				text: 'Channel List'
+				font_size: '16sp'
+				
+			Image:
+				source: 'data/icon.png'
+				mipmap: True
+				size_hint_x: None
+				width: self.height	
+
+        ListView:
+            adapter: ListAdapter(data=root.channeldata, cls=Factory.ChannelListItem, args_converter=root.channel_args_converter)
+		
+		AnchorLayout:
+			anchor_x: 'center'
+			anchor_y: 'bottom'
+			BoxLayout:
+				orientation: 'vertical'
+				ChannelGeneralOptions:
+					id: _channel_options
+					size_hint: 1,None
+					height: 60
+				StatusBar:
+					id: _status_bar
+					size_hint: 1,None
+					height: 24
+					
+<GeneralOptions@BoxLayout>:
+	orientation:'horizontal'
+	padding:2
+	Button:
+		text:'View channel'
+		on_release: app.view_channel()
+		
+<ChannelGeneralOptions@BoxLayout>:
+	orientation:'horizontal'
+	padding:2
+	Button:
+		text:'Add channel'
+		on_release: app.add_channel()
+
+<StatusBar@BoxLayout>:
+	orientation:'horizontal'
+	Label:
+		text: root.time_str
+	Label:
+		text:'Wire connected: ' + root.connection_status
+		
+<PickPlatformView>:
+	
+	BoxLayout:
+		orientation: 'vertical'
+		
+		Button:
+			text: 'RSS'
+			on_release: app.edit_channel(root.channel_index,'RSS')
+		Button:
+			text: 'SinaWeibo'
+			on_release: app.edit_channel(root.channel_index,'SinaWeibo')
+		Button:
+			text: 'RenrenBlog'
+			on_release: app.edit_channel(root.channel_index,'RenrenBlog')
+		Button:
+			text: 'RenrenShare'
+			on_release: app.edit_channel(root.channel_index,'RenrenShare')
+		Button:
+			text: 'RenrenStatus'
+			on_release: app.edit_channel(root.channel_index,'RenrenStatus')
+		Button:
+			text: 'TencentWeiboStatus'
+			on_release: app.edit_channel(root.channel_index,'TencentWeiboStatus')
+		Button:
+			text: 'TwitterStatus'
+			on_release: app.edit_channel(root.channel_index,'TwitterStatus')

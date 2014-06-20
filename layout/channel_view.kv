@@ -1,0 +1,180 @@
+<ChannelView>:
+	
+	on_channel_url: app.set_channel_content(self.channel_index, self.channel_url,'url')
+	on_channel_access_key: app.set_channel_content(self.channel_index, self.channel_access_key,'access_key')
+	on_channel_access_secret: app.set_channel_content(self.channel_index, self.channel_access_secret,'access_secret')
+	on_channel_platform: app.set_channel_content(self.channel_index, self.channel_platform,'platform')
+	on_channel_name: app.set_channel_content(self.channel_index, self.channel_name,'name')
+	on_channel_app_secret: app.set_channel_content(self.channel_index, self.channel_app_secret,'app_secret')
+	on_channel_app_key: app.set_channel_content(self.channel_index, self.channel_app_key,'app_key')
+	on_channel_callback_url: app.set_channel_content(self.channel_index, self.channel_callback_url,'callback_url')
+	on_channel_title: app.set_channel_title(self.channel_index, self.channel_title)
+	
+    BoxLayout:
+
+		orientation: 'vertical'
+
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: None
+			height: '48dp'
+			padding: '5dp'
+
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+			
+			Button:
+				text: '<'
+				size_hint_x: None
+				width: self.height
+				on_release: app.add_channel_to_pocket(root.channel_index,root.is_create,root.former_channel_name)
+
+			MutableLabelTextInput:
+				text: root.channel_name
+				font_size: '12sp'
+				multiline: False
+				on_text: root.channel_name = self.text
+
+			Button:
+				text: 'X'
+				size_hint_x: None
+				width: self.height
+				on_release: app.del_channel(root.channel_index)
+		
+		BoxLayout:
+		
+			orientation: 'horizontal'
+			padding:'10sp'
+			
+			BoxLayout:
+				orientation: 'vertical'
+				size_hint_x: 0.3
+				
+				Label:
+					height: '48dp'
+					size_hint_y: None
+					font_size: '15sp'
+					text: 'platform'
+					
+				Label:
+					height: '48dp'
+					size_hint_y: None
+					font_size: '15sp'
+					text: 'channel name'
+
+				Label:
+					height: '48dp'
+					size_hint_y: None
+					font_size: '15sp'
+					text: 'url'
+					
+				Label:
+					height: '48dp'
+					size_hint_y: None
+					font_size: '15sp'
+					text: 'app secret'
+					
+				Label:
+					height: '48dp'
+					size_hint_y: None
+					font_size: '15sp'
+					text: 'app key'
+
+				Label:
+					height: '48dp'
+					size_hint_y: None
+					font_size: '15sp'
+					text: 'callback url'
+					
+				Label:
+					height: '48dp'
+					size_hint_y: None
+					font_size: '15sp'
+					text: 'access key'
+
+				Label:
+					height: '48dp'
+					size_hint_y: None
+					font_size: '15sp'
+					text: 'access secret'
+			
+			BoxLayout:
+				orientation: 'vertical'
+				size_hint_x: 0.7
+				
+
+				Spinner:
+					height: '48dp'
+					size_hint_y: None
+					id: w_platform
+					text: root.channel_platform
+					values: ('RSS', 'SinaWeiboStatus', 'RenrenBlog', 'RenrenShare','RenrenStatus','TencentWeiboStatus','TwitterStatus')
+					on_text: root.channel_platform = self.text
+					on_text: root.check_all()
+					
+				TextInput:
+					height: '48dp'
+					size_hint_y: None
+					id: w_channel_name
+					multiline: False
+					text: root.channel_name
+					on_text: root.channel_name = self.text
+
+				TextInput:
+					height: '48dp'
+					size_hint_y: None
+					id: w_channel_url
+					multiline: False
+					disabled: False
+					text: root.channel_url
+					on_text: root.channel_url = self.text
+					
+				TextInput:
+					height: '48dp'
+					size_hint_y: None
+					id: w_app_secret
+					multiline: False
+					disabled: False
+					text: root.channel_app_secret
+					on_text: root.channel_app_secret = self.text
+					
+				TextInput:
+					height: '48dp'
+					size_hint_y: None
+					id: w_app_key
+					multiline: False
+					disabled: False
+					text: root.channel_app_key
+					on_text: root.channel_app_key = self.text
+					
+				TextInput:
+					height: '48dp'
+					size_hint_y: None
+					id: w_callback_url
+					multiline: False
+					disabled: False
+					text: root.channel_callback_url
+					on_text: root.channel_callback_url = self.text
+
+				TextInput:
+					height: '48dp'
+					size_hint_y: None
+					id: w_access_key
+					multiline: False
+					disabled: False
+					text: root.channel_access_key
+					on_text: root.channel_access_key = self.text
+
+				TextInput:
+					height: '48dp'
+					size_hint_y: None
+					id: w_access_secret
+					multiline: False
+					disabled: False
+					text: root.channel_access_secret
+					on_text: root.channel_access_secret = self.text
