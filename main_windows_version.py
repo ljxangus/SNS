@@ -130,8 +130,6 @@ class SNS(Screen):
 
         self.all_status.insert(status_index,status)
         self.__insert_status(status,status_index)
-		
-        self.getKeywords(status)
         return True
 
     def __insert_status(self,status,index):
@@ -141,14 +139,15 @@ class SNS(Screen):
         title_text = '%s said,' % (data.username)
         content_text = text
         self.snsdata.append({'title':title_text, 'content':content_text})
+        self.getKeywords(content_text)
 
     def getKeywords(self,status):
         tags = extractKeywords(status)
         for tag in tags:
-            if keywordDict[tag]:
-                keywordDict[tag]
+            if tag not in self.keywordDict:
+                self.keywordDict[tag] = 1
             else:
-                keywordDict = 1
+                self.keywordDict[tag] += 1
 
     def sns_args_converter(self, row_index, item):
         return {
