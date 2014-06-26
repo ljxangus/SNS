@@ -39,10 +39,14 @@ class MSSPopup(Popup):
     channelID = ''
     title_data = StringProperty()
     content_data= StringProperty()
-    def change_index(self, index, title, content):
+    sns_indexinlist = 0
+    startTime = 0
+    def change_index(self, index, title, content, indexinlist,start):
         self.sns_index = index
         self.title_data = title #app.sns.snsdata[index]['title']
         self.content_data = content #app.sns.snsdata[index]['content']
+        self.sns_indexinlist = indexinlist
+        self.startTime = start
         
 class UpdateStatus(Screen):
     post_content = StringProperty()

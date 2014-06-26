@@ -95,8 +95,7 @@ class MutableTextInput(FloatLayout):
             self.view()
 
 class SNS(Screen):
-    original_sns_data = dict()
-    keywordDict = dict()
+    statusList = ListProperty()
     snsdata = ListProperty()
     channeldata = ListProperty()
     all_status = []
@@ -111,6 +110,13 @@ class SNS(Screen):
         self.ch.sort()
         self.ch.insert(0, 'All Platform')
         self.ids._channel_spinner.values = self.ch
+        
+        if exists('conf/status.json'):
+            with open('conf/status.json','r') as fd:
+                statusdata = json.load(fd)
+            self.statusList = statusdata
+        for status in self.statusList:
+            print status['keywords']
 
     def change_channel(self, spinner, text):
         channel = spinner.text
@@ -139,15 +145,30 @@ class SNS(Screen):
         title_text = '%s said,' % (data.username)
         content_text = text
         self.snsdata.append({'title':title_text, 'content':content_text})
-        self.getKeywords(content_text)
+        #self.getKeywords(content_text)
 
     def getKeywords(self,status):
         tags = extractKeywords(status)
-        for tag in tags:
-            if tag not in self.keywordDict:
-                self.keywordDict[tag] = 1
-            else:
-                self.keywordDict[tag] += 1
+        tagsInList = False
+        index = 0
+        for status in self.statusList:
+            if tags == status['keywords']:
+                index = self.statusList.index(status)
+                status['frequency'] += 1
+                tagsInList = True
+        
+        if not tagsInList:
+            self.statusList.append({'keywords':tags,
+                                    'frequency' : 1,
+                                    'time' : 0,
+                                    'like' :None
+                                    })
+            index = len(self.statusList)-1
+                        
+        with open('conf/status.json', 'w') as fd:
+            json.dump(self.statusList, fd,indent = 2)
+            
+        return index
 
     def sns_args_converter(self, row_index, item):
         return {
@@ -228,6 +249,8 @@ class SNSApp(App):
         root.add_widget(self.sns)
         
         self.choose_status_index = 0
+        
+        time.clock()
 
         #for s in sp.home_timeline(10):
             #self.sns.insert_status(s)
@@ -237,14 +260,14 @@ class SNSApp(App):
     def load_channel(self):
         if not exists(self.channel_fn):
             return
-        with open(self.channel_fn,'rb') as fd:
+        with open(self.channel_fn,'r') as fd:
             channeldata = json.load(fd)
         self.sns.channeldata = channeldata
         
         
     def save_channel(self):
-        with open(self.channel_fn, 'wb') as fd:
-            json.dump(self.sns.channeldata, fd)
+        with open(self.channel_fn, 'w') as fd:
+            json.dump(self.sns.channeldata, fd, indent = 2)
         sp.save_config()
             
     def del_channel(self,channel_index):
@@ -462,13 +485,31 @@ class SNSApp(App):
         
     def show_status(self, snsindex):
         self.choose_status_index = snsindex
+        content = self.sns.snsdata[snsindex]['content']
+
+        indexInStatusList = self.sns.getKeywords(content)
+        
         new_content_popup = MSSPopup(sns_index=snsindex)
+        print 'New popup build'
+        startTime = time.clock()
+        print startTime
         new_content_popup.change_index(snsindex, 
                                        self.sns.snsdata[snsindex]['title'], 
-                                       self.sns.snsdata[snsindex]['content'])
+                                       content,
+                                       indexInStatusList,
+                                       startTime)
         print 'StatusMSSPopup has index ' + str(new_content_popup.sns_index)
+        
         new_content_popup.open()
+        
         print self.sns.snsdata[new_content_popup.sns_index]['content']
+    
+    def close_status(self, snsindex, starttime, like):
+        self.sns.statusList[snsindex]['time'] += (time.clock()-starttime)
+        self.sns.statusList[snsindex]['like'] = like
+        
+        with open('conf/status.json', 'w') as fd:
+            json.dump(self.sns.statusList, fd,indent = 2)
         
     def forward_status(self, message, text):
         print 'forward_status to ' + self.sns.current_channel_intext 
