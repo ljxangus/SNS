@@ -502,7 +502,7 @@ class SNSApp(App):
         
         new_content_popup.open()
         
-        print self.sns.snsdata[new_content_popup.sns_index]['content']
+        #print self.sns.snsdata[new_content_popup.sns_index]['content']
     
     def close_status(self, snsindex, starttime, like):
         self.sns.statusList[snsindex]['time'] += (time.clock()-starttime)
