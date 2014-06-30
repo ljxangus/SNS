@@ -161,7 +161,8 @@ class SNS(Screen):
             self.statusList.append({'keywords':tags,
                                     'frequency' : 1,
                                     'time' : 0,
-                                    'like' :None
+                                    'like' :None,
+                                    'currentTime' :time.strftime("%b %d %H:%M:%S")
                                     })
             index = len(self.statusList)-1
                         
