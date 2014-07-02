@@ -115,8 +115,8 @@ class SNS(Screen):
             with open('conf/status.json','r') as fd:
                 statusdata = json.load(fd)
             self.statusList = statusdata
-        for status in self.statusList:
-            print status['keywords']
+        #for status in self.statusList:
+         #   print status['status_content']
 
     def change_channel(self, spinner, text):
         channel = spinner.text
@@ -142,14 +142,24 @@ class SNS(Screen):
         data = status.parsed
         try: text = data.title
         except: text = data.text
-        title_text = '%s said,' % (data.username)
+        title_text = '%s said at %s,' % (data.username, data.time)
         #title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
-        self.snsdata.append({'title':title_text, 'content':content_text})
-        #self.getKeywords(content_text)
+        self.snsdata.append({'title':title_text, 
+                             'content':content_text, 
+                             'name':data.username,
+                             'time':data.time})
+        self.getKeywords(content_text,data.username,data.time)
 
-    def getKeywords(self,status):
+    def getKeywords(self,status_content,status_username=None,status_time=None):
+        '''
+        to store full information, we did extract the keywords, 
+        now we just save the full status to keep all useful information
+        '''
+        #tag version
+        '''
         tags = extractKeywords(status)
+        
         tagsInList = False
         index = 0
         for status in self.statusList:
@@ -166,6 +176,29 @@ class SNS(Screen):
                                     'currentTime' :time.strftime("%b %d %H:%M:%S")
                                     })
             index = len(self.statusList)-1
+        '''
+        #----------------------------------------------------#
+        #full status version
+        
+        statusInList = False
+        index = 0
+        for status in self.statusList:
+            if status_content == status['status_content']:
+                index = self.statusList.index(status)
+                status['frequency'] += 1
+                statusInList = True
+        
+        if not statusInList:
+            self.statusList.append({'status_content':status_content,
+                                    'status_username':status_username,
+                                    'status_time':status_time,
+                                    'frequency' : 1,
+                                    'time' : 0,
+                                    'like' :None,
+                                    'currentTime' :time.strftime("%a, %d %b %Y %H:%M:%S")
+                                    })
+            index = len(self.statusList)-1
+        #------------------------------------------------------#
                         
         with open('conf/status.json', 'w') as fd:
             json.dump(self.statusList, fd,indent = 2)
@@ -184,7 +217,7 @@ class SNS(Screen):
         del self.snsdata[0:len(self.snsdata)]
         if not self.current_channel == None:
             if temp_length>0:
-                hl = sp.home_timeline(temp_length, self.current_channel)
+                hl = sp.home_timeline(100+temp_length, self.current_channel)
             else:
                 hl = sp.home_timeline(100, self.current_channel)
         else:
@@ -489,8 +522,10 @@ class SNSApp(App):
     def show_status(self, snsindex):
         self.choose_status_index = snsindex
         content = self.sns.snsdata[snsindex]['content']
+        name = self.sns.snsdata[snsindex]['name']
+        statustime = self.sns.snsdata[snsindex]['time']
 
-        indexInStatusList = self.sns.getKeywords(content)
+        indexInStatusList = self.sns.getKeywords(content,name,statustime)
         
         new_content_popup = MSSPopup(sns_index=snsindex)
         print 'New popup build'
