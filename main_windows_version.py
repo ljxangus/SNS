@@ -143,6 +143,7 @@ class SNS(Screen):
         try: text = data.title
         except: text = data.text
         title_text = '%s said,' % (data.username)
+        #title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
         self.snsdata.append({'title':title_text, 'content':content_text})
         #self.getKeywords(content_text)
@@ -185,9 +186,9 @@ class SNS(Screen):
             if temp_length>0:
                 hl = sp.home_timeline(temp_length, self.current_channel)
             else:
-                hl = sp.home_timeline(10, self.current_channel)
+                hl = sp.home_timeline(100, self.current_channel)
         else:
-            hl = sp.home_timeline(10, self.current_channel)
+            hl = sp.home_timeline(100, self.current_channel)
 
         i = 0
         global first_status
@@ -203,6 +204,7 @@ class SNS(Screen):
         return True
         
     def more_status(self):
+        print 'The length of the sp is ' + str(len(sp))
         n  = len(self.all_status) + len(sp) * 5
         more_home_timeline = sp.home_timeline(n)
         first_in_more = len(more_home_timeline)
@@ -214,7 +216,7 @@ class SNS(Screen):
                 print 'first status in more status ' + str(i)
                 break
             i+=1
-        print first_status
+        #print first_status
         
         i=0
         j=0
@@ -225,7 +227,7 @@ class SNS(Screen):
                     print i, j
                     #print sta
             i += 1
-        print "length of snsdata "+ str(len(self.snsdata))
+        print "length of sns data "+ str(len(self.snsdata))
         return True
         
 class SNSApp(App):
@@ -272,7 +274,7 @@ class SNSApp(App):
         sp.save_config()
             
     def del_channel(self,channel_index):
-        if sp[self.sns.channeldata[channel_index]['name']]:
+        if self.sns.channeldata[channel_index]['name']!=u'':
             del sp[self.sns.channeldata[channel_index]['name']]
         del self.sns.channeldata[channel_index]
         self.save_channel() #include save_config()

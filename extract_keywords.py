@@ -8,6 +8,5 @@ def extractKeywords(status):
 	content = status
 	tags = jieba.analyse.extract_tags(content, topK=2)
 
-	print 'The tags are'
-	print ",".join(tags)
+	print 'The tags are' + ",".join(tags)
 	return tags
