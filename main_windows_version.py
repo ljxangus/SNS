@@ -217,11 +217,11 @@ class SNS(Screen):
         del self.snsdata[0:len(self.snsdata)]
         if not self.current_channel == None:
             if temp_length>0:
-                hl = sp.home_timeline(100+temp_length, self.current_channel)
+                hl = sp.home_timeline(20+temp_length, self.current_channel)
             else:
-                hl = sp.home_timeline(100, self.current_channel)
+                hl = sp.home_timeline(20, self.current_channel)
         else:
-            hl = sp.home_timeline(100, self.current_channel)
+            hl = sp.home_timeline(20, self.current_channel)
 
         i = 0
         global first_status

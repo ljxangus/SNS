@@ -20,42 +20,45 @@
 
 <MSSPopup@Popup>:
 	size_hint: 1, 1
-	title: 'Details'
+	title: 'Status Details'
 	auto_dismiss: False
 	BoxLayout:
 		orientation: 'vertical'
 		padding:'1dp'
 		Label:
+			id: popup_label
 			text: root.title_data
 			font_name:"fonts/DroidSansFallback.ttf"
 			text_size:self.width,self.height
 			valign:'top'
 			halign:'left'
 			max_lines:2
-			size_hint_y:.3
+			size_hint_y:.2
 
 		Label:
 			text: root.content_data
 			font_name:"fonts/DroidSansFallback.ttf"
+			height: root.height - root.ids.popup_label.height
 			text_size:self.width,self.height
 			valign:'top'
 			halign:'left'
+			font_size:'12dp'
 			#disabled:True
 
 		BoxLayout:
 			orientation:'horizontal'
 			Button:
-				size_hint_y:.2
+				size_hint_y:.1
 				text:'Like'
 				on_press: app.close_status(root.sns_indexinlist,root.startTime,True)
 				on_press: root.dismiss()
 			Button:
-				size_hint_y:.2
+				size_hint_y:.1
 				text:'Do not care'
 				on_press: app.close_status(root.sns_indexinlist,root.startTime,None)
 				on_press: root.dismiss()
 			Button:
-				size_hint_y:.2
+				size_hint_y:.1
 				text:'Unlike'
 				on_press: app.close_status(root.sns_indexinlist,root.startTime,False)
 				on_press: root.dismiss()

@@ -10,7 +10,7 @@
             size: self.width, 1
 	BoxLayout:
 		orientation:'vertical'
-		padding:'5dp'
+		#padding:'2dp'
 	
 		Button:
 			text: root.sns_title
@@ -32,11 +32,11 @@
 			#padding:'2dp'
 	
 			Label:
-				text: root.sns_content + '\n [ref=world]MORE[/ref]'
-				text_size:self.width-10, self.height
+				text: root.sns_content + '\n' + '[color=ff0099][ref=world]MORE[/ref][/color]'
+				text_size:self.width, self.height
 				valign:'top'
 				halign:'left'
-				font_size:'11sp'
+				font_size:'11dp'
 				font_name:"fonts/DroidSansFallback.ttf"
 				markup:True
 				on_ref_press:app.show_status(root.sns_index)
@@ -116,12 +116,12 @@
 				GeneralOptions:
 					id: _general_options
 					size_hint: 1,None
-					height: 30
+					height: 50
 
 					
 				StatusBar:
 					id: _status_bar
 					size_hint: 1,None
-					height: 30
+					height: 40
 
 	
