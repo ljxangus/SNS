@@ -19,7 +19,7 @@
 			on_press: root.dismiss()
 
 <MSSPopup@Popup>:
-	size_hint: .8, .8
+	size_hint: 1, 1
 	title: 'Details'
 	auto_dismiss: False
 	BoxLayout:
@@ -28,16 +28,19 @@
 		Label:
 			text: root.title_data
 			font_name:"fonts/DroidSansFallback.ttf"
-			text_size:self.size
+			text_size:self.width,self.height
+			valign:'top'
+			halign:'left'
 			max_lines:2
 			size_hint_y:.3
 
-		TextInput:
+		Label:
 			text: root.content_data
 			font_name:"fonts/DroidSansFallback.ttf"
-			disabled:True
-			#size_hint_y: 4
-			#size_hint_x: 1
+			text_size:self.width,self.height
+			valign:'top'
+			halign:'left'
+			#disabled:True
 
 		BoxLayout:
 			orientation:'horizontal'
@@ -45,6 +48,11 @@
 				size_hint_y:.2
 				text:'Like'
 				on_press: app.close_status(root.sns_indexinlist,root.startTime,True)
+				on_press: root.dismiss()
+			Button:
+				size_hint_y:.2
+				text:'Do not care'
+				on_press: app.close_status(root.sns_indexinlist,root.startTime,None)
 				on_press: root.dismiss()
 			Button:
 				size_hint_y:.2

@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 <SNSListItem>:
-	height: '120sp'
+	height: '150sp'
 	size_hint_y: None
 	canvas:
         Color:
@@ -14,7 +14,9 @@
 	
 		Button:
 			text: root.sns_title
-			text_size:self.width-10, None
+			text_size:self.width-10, self.height
+			valign:'top'
+			halign:'left'
 			font_size:'12sp'
 			font_name:"fonts/DroidSansFallback.ttf"
 			bold: True
@@ -26,13 +28,15 @@
 			id:w_sns_gridlayout
 			cols: 2
 			row_force_default: True
-			row_default_height: 80
-			padding:'2dp'
+			row_default_height: 110
+			#padding:'2dp'
 	
 			Label:
 				text: root.sns_content + '\n [ref=world]MORE[/ref]'
-				text_size:self.width-10, None
-				font_size:'12sp'
+				text_size:self.width-10, self.height
+				valign:'top'
+				halign:'left'
+				font_size:'11sp'
 				font_name:"fonts/DroidSansFallback.ttf"
 				markup:True
 				on_ref_press:app.show_status(root.sns_index)

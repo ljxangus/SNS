@@ -149,7 +149,7 @@ class SNS(Screen):
                              'content':content_text, 
                              'name':data.username,
                              'time':data.time})
-        self.getKeywords(content_text,data.username,data.time)
+        #self.getKeywords(content_text,data.username,data.time)
 
     def getKeywords(self,status_content,status_username=None,status_time=None):
         '''
@@ -219,9 +219,9 @@ class SNS(Screen):
             if temp_length>0:
                 hl = sp.home_timeline(temp_length, self.current_channel)
             else:
-                hl = sp.home_timeline(100, self.current_channel)
+                hl = sp.home_timeline(30, self.current_channel)
         else:
-            hl = sp.home_timeline(100, self.current_channel)
+            hl = sp.home_timeline(30, self.current_channel)
 
         i = 0
         global first_status
