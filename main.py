@@ -14,6 +14,7 @@ __version__ = '1.2'
 import json
 import time
 import kivy
+import logging
 from kivy.config import Config
 import kivy.resources
 from os.path import join, exists
@@ -39,7 +40,7 @@ from snsapi.utils import utc2str
 
 from sns import SNSView, SNSListItem, SNSPopup, UpdateStatus, ForwardStatus, ReplyStatus, MSSPopup
 from channel import ChannelListItem, Channel,  ChannelView
-from accessories import SaveConfigBubble,  PickPlatformView,  StatusBar,  GeneralOptions
+from accessories import SaveConfigBubble,  PickPlatformView,  StatusBar,  GeneralOptions, DropDownMenu, AboutPopup, HelpPopup
 from extract_keywords import extractKeywords
 
 kivy.require('1.8.0')
@@ -111,6 +112,7 @@ class SNS(Screen):
         self.ch.sort()
         self.ch.insert(0, 'All Platform')
         self.ids._channel_spinner.values = self.ch
+        self.dropdownmenu = DropDownMenu()
         
         self.statusGridLayout = GridLayout(cols=1, padding=5,size_hint=(1, None))
         self.statusGridLayout.bind(minimum_height=self.statusGridLayout.setter('height'))
@@ -125,7 +127,7 @@ class SNS(Screen):
             self.statusList = statusdata
             
         #binding test
-        self.StatusListview.bind(scroll_y=self.my_y_callback)
+        #self.StatusListview.bind(scroll_y=self.my_y_callback)
         #for status in self.statusList:
          #   print status['status_content']
 
@@ -134,9 +136,9 @@ class SNS(Screen):
         if not channel or channel == self.current_channel: return
         self.current_channel = channel != 'All Platform' and channel or None
         self.current_channel_intext = channel != 'All Platform' and channel or 'All Platform'
-        print 'self.current_channel_intext is ' + self.current_channel_intext
-        print 'self.current_channel is ' 
-        print self.current_channel
+        logging.debug('self.current_channel_intext is ' + self.current_channel_intext) 
+        logging.debug('self.current_channel is ' ) 
+        logging.debug(str(self.current_channel))
         return True
         
     def insert_status(self,status,status_index = None):
@@ -246,14 +248,14 @@ class SNS(Screen):
             if self.insert_status(s, i):
                 i += 1
                 
-        print "length of sns data "+ str(len(self.snsdata))
-        print 'the type of snsdata is '+str(type(self.snsdata))
-        print 'the type of all_status is '+str(type(self.all_status))
+        logging.debug("length of sns data "+ str(len(self.snsdata))) 
+        logging.debug('the type of snsdata is '+str(type(self.snsdata))) 
+        logging.debug('the type of all_status is '+str(type(self.all_status))) 
         self.StatusListview.scroll_y = 1
         return True
         
     def more_status(self):
-        print 'The length of the sp is ' + str(len(sp))
+        logging.debug('The length of the sp is ' + str(len(sp)))
         n  = len(self.all_status) + len(sp) * 5
         more_home_timeline = sp.home_timeline(n)
         first_in_more = len(more_home_timeline)
@@ -262,7 +264,7 @@ class SNS(Screen):
         for sta in more_home_timeline:
             if sta == first_status:
                 first_in_more = i
-                print 'first status in more status ' + str(i)
+                logging.debug('first status in more status ' + str(i))
                 break
             i+=1
         #print first_status
@@ -276,12 +278,12 @@ class SNS(Screen):
                     print i, j
                     #print sta
             i += 1
-        print "length of sns data "+ str(len(self.snsdata))
+        logging.debug( "length of sns data "+ str(len(self.snsdata)))
         self.StatusListview.scroll_y = 1
         return True
     
     def my_y_callback(self,obj, value):
-        print('on listview', obj, 'scroll y changed to', value)
+        logging.debug('on listview', obj, 'scroll y changed to', value)
         
 class SNSApp(App):
     
@@ -627,6 +629,17 @@ class SNSApp(App):
     def go_sns_quietly(self):
         self.transition.direction = 'right'
         self.root.current = 'sns'
+        
+    def OpenDropDownMenu(self,obj):
+        self.sns.dropdownmenu.open(obj)
+        
+    def aboutPopup(self):
+        newAboutPopup = AboutPopup()
+        newAboutPopup.open()
+        
+    def helpPopup(self):
+        newHelpPopup = HelpPopup()
+        newHelpPopup.open()
         
     @property
     def channel_fn(self):
