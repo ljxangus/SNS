@@ -153,8 +153,8 @@ class SNS(Screen):
         data = status.parsed
         try: text = data.title
         except: text = data.text
-        #title_text = '%s said at %s,' % (data.username, data.time)
-        title_text = '%s at %s' % (data.username, utc2str(data.time))
+        title_text = '%s said at %s,' % (data.username, data.time)
+        #title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
         self.snsdata.append({'title':title_text, 
                              'content':content_text, 
