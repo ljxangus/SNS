@@ -62,6 +62,26 @@
 				text:'Unlike'
 				on_press: app.close_status(root.sns_indexinlist,root.startTime,False)
 				on_press: root.dismiss()
+
+<AboutPopup>:
+	size_hint: .5, .5
+	title: 'About the author'
+	auto_dismiss: True
+	BoxLayout:
+		orientation: 'vertical'
+		padding:'1dp'
+		Label:
+			text: 'The app is created by Jonathan, thanks for enjoying.'
+			
+<HelpPopup>:
+	size_hint: .5, .5
+	title: 'HELP INFO'
+	auto_dismiss: True
+	BoxLayout:
+		orientation: 'vertical'
+		padding:'1dp'
+		Label:
+			text: 'You can enquire at https://github.com/ljxangus/SNS'
 			
 
 

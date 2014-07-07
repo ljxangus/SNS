@@ -545,7 +545,7 @@ class SNSApp(App):
         name = self.sns.snsdata[snsindex]['name']
         statustime = self.sns.snsdata[snsindex]['time']
 
-        indexInStatusList = self.sns.getKeywords(content,name,statustime)
+        indexInStatusList = self.sns.getKeywords(content,name,utc2str(statustime))
         
         new_content_popup = MSSPopup(sns_index=snsindex)
         print 'New popup build'

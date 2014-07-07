@@ -39,7 +39,7 @@ from snsapi.utils import utc2str
 
 from sns import SNSView, SNSListItem, SNSPopup, UpdateStatus, ForwardStatus, ReplyStatus, MSSPopup
 from channel import ChannelListItem, Channel,  ChannelView
-from accessories import SaveConfigBubble,  PickPlatformView,  StatusBar,  GeneralOptions
+from accessories import SaveConfigBubble,  PickPlatformView,  StatusBar,  GeneralOptions, DropDownMenu, AboutPopup, HelpPopup
 from extract_keywords import extractKeywords
 
 kivy.require('1.8.0')
@@ -111,6 +111,7 @@ class SNS(Screen):
         self.ch.sort()
         self.ch.insert(0, 'All Platform')
         self.ids._channel_spinner.values = self.ch
+        self.dropdownmenu = DropDownMenu()
         
         self.statusGridLayout = GridLayout(cols=1, padding=5,size_hint=(1, None))
         self.statusGridLayout.bind(minimum_height=self.statusGridLayout.setter('height'))
@@ -627,6 +628,17 @@ class SNSApp(App):
     def go_sns_quietly(self):
         self.transition.direction = 'right'
         self.root.current = 'sns'
+        
+    def OpenDropDownMenu(self,obj):
+        self.sns.dropdownmenu.open(obj)
+        
+    def aboutPopup(self):
+        newAboutPopup = AboutPopup()
+        newAboutPopup.open()
+        
+    def helpPopup(self):
+        newHelpPopup = HelpPopup()
+        newHelpPopup.open()
         
     @property
     def channel_fn(self):

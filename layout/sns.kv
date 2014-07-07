@@ -75,3 +75,34 @@
 <SaveConfigBubble@Bubble>:
 	Label:
 		text:'Configuration saved'
+		
+<DropDownMenu>:
+    Button:
+        text: 'View channel'
+        font_size: '12sp'
+        size_hint_y: None
+        height: 30
+        on_release: app.view_channel()
+        on_release: root.dismiss()
+    Button:
+        text: 'Authorize channel'
+        font_size: '12sp'
+        size_hint_y: None
+        height: 30
+        on_release: app.auth_channel()
+        on_release: root.dismiss()
+	Button:
+        text: 'About'
+        font_size: '12sp'
+        size_hint_y: None
+        height: 30
+        on_release: app.aboutPopup()
+        on_release: root.dismiss()
+	Button:
+        text: 'Help'
+        font_size: '12sp'
+        size_hint_y: None
+        height: 30
+        on_release: app.helpPopup()
+        on_release: root.dismiss()
+	

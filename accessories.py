@@ -16,6 +16,8 @@ from kivy.properties import ListProperty, StringProperty, \
         NumericProperty, BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.bubble import Bubble
+from kivy.uix.dropdown import DropDown
+from kivy.uix.popup import Popup
 from kivy.clock import Clock
 
 
@@ -41,4 +43,12 @@ class StatusBar(BoxLayout):
 class GeneralOptions(BoxLayout):
 	channel_index = NumericProperty()
 	channel_info = ListProperty()
-	
+    
+class DropDownMenu(DropDown):
+    pass
+
+class AboutPopup(Popup):
+    pass
+
+class HelpPopup(Popup):
+    pass	
