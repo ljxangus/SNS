@@ -48,6 +48,8 @@ class MSSPopup(Popup):
         self.sns_indexinlist = indexinlist
         self.startTime = start
         
+        self.content_data = DividingUnicode.div(self.content_data, 20)
+        
 class UpdateStatus(Screen):
     post_content = StringProperty()
     
@@ -64,3 +66,31 @@ class ReplyStatus(Screen):
     text = StringProperty()
     def change_original_message(self, message):
         self.original_message = message
+        
+class DividingUnicode:
+    @staticmethod
+    def div(unicodestr,divlength=20):
+        '''
+            HERE we need to divide the text manually, so that 
+            they can shown in the right form and can \n automatically 
+            according to the screen size.
+        '''
+        tempstr = []
+        j=0
+        #The divide length of the unicode string
+        DIVLENGTH = divlength
+    
+        for i in range(len(unicodestr)):
+            if i%DIVLENGTH==0 and i!=0:
+                tempstr.append(unicodestr[i-DIVLENGTH:i])
+                j=i
+            if len(unicodestr)-i<DIVLENGTH:
+                tempstr.append(unicodestr[j:len(unicodestr)])
+                break
+    
+        mergestr = unicode()
+        for stri in tempstr:
+            mergestr = mergestr + stri + ' '
+        
+        return mergestr
+        

@@ -9,12 +9,11 @@ ignoring the time and the conversion of timezone
 
 '''
 
-__version__ = '1.2'
+__version__ = '1.3'
 
 import json
 import time
 import kivy
-import logging
 from kivy.config import Config
 import kivy.resources
 from os.path import join, exists
@@ -38,7 +37,7 @@ from kivy.factory import Factory
 from snsapi.snspocket import SNSPocket
 from snsapi.utils import utc2str
 
-from sns import SNSView, SNSListItem, SNSPopup, UpdateStatus, ForwardStatus, ReplyStatus, MSSPopup
+from sns import SNSView, SNSListItem, SNSPopup, UpdateStatus, ForwardStatus, ReplyStatus, MSSPopup, DividingUnicode
 from channel import ChannelListItem, Channel,  ChannelView
 from accessories import SaveConfigBubble,  PickPlatformView,  StatusBar,  GeneralOptions, DropDownMenu, AboutPopup, HelpPopup
 from extract_keywords import extractKeywords
@@ -122,12 +121,12 @@ class SNS(Screen):
         self.StatusListview.add_widget(self.statusGridLayout)
         
         if exists('conf/status.json'):
-            with open('conf/status.json','r') as fd:
+            with open('conf/status.json','rb') as fd:
                 statusdata = json.load(fd)
             self.statusList = statusdata
             
         #binding test
-        #self.StatusListview.bind(scroll_y=self.my_y_callback)
+        self.StatusListview.bind(scroll_y=self.my_y_callback)
         #for status in self.statusList:
          #   print status['status_content']
 
@@ -136,9 +135,9 @@ class SNS(Screen):
         if not channel or channel == self.current_channel: return
         self.current_channel = channel != 'All Platform' and channel or None
         self.current_channel_intext = channel != 'All Platform' and channel or 'All Platform'
-        logging.debug('self.current_channel_intext is ' + self.current_channel_intext) 
-        logging.debug('self.current_channel is ' ) 
-        logging.debug(str(self.current_channel))
+        print 'self.current_channel_intext is ' + self.current_channel_intext
+        print 'self.current_channel is ' 
+        print self.current_channel
         return True
         
     def insert_status(self,status,status_index = None):
@@ -158,6 +157,11 @@ class SNS(Screen):
         #title_text = '%s said at %s,' % (data.username, data.time)
         title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
+        
+        self.getKeywords(content_text,data.username,data.time)
+        
+        content_text = DividingUnicode.div(content_text,30)
+        
         self.snsdata.append({'title':title_text, 
                              'content':content_text, 
                              'name':data.username,
@@ -165,8 +169,6 @@ class SNS(Screen):
         #scroll view operation
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
         self.statusGridLayout.add_widget(newItem)
-        
-        self.getKeywords(content_text,data.username,data.time)
 
     def getKeywords(self,status_content,status_username=None,status_time=None):
         '''
@@ -217,7 +219,7 @@ class SNS(Screen):
             index = len(self.statusList)-1
         #------------------------------------------------------#
                         
-        with open('conf/status.json', 'w') as fd:
+        with open('conf/status.json', 'wb') as fd:
             json.dump(self.statusList, fd,indent = 2)
             
         return index
@@ -248,14 +250,14 @@ class SNS(Screen):
             if self.insert_status(s, i):
                 i += 1
                 
-        logging.debug("length of sns data "+ str(len(self.snsdata))) 
-        logging.debug('the type of snsdata is '+str(type(self.snsdata))) 
-        logging.debug('the type of all_status is '+str(type(self.all_status))) 
+        print "length of sns data "+ str(len(self.snsdata))
+        print 'the type of snsdata is '+str(type(self.snsdata))
+        print 'the type of all_status is '+str(type(self.all_status))
         self.StatusListview.scroll_y = 1
         return True
         
     def more_status(self):
-        logging.debug('The length of the sp is ' + str(len(sp)))
+        print 'The length of the sp is ' + str(len(sp))
         n  = len(self.all_status) + len(sp) * 5
         more_home_timeline = sp.home_timeline(n)
         first_in_more = len(more_home_timeline)
@@ -264,7 +266,7 @@ class SNS(Screen):
         for sta in more_home_timeline:
             if sta == first_status:
                 first_in_more = i
-                logging.debug('first status in more status ' + str(i))
+                print 'first status in more status ' + str(i)
                 break
             i+=1
         #print first_status
@@ -278,12 +280,12 @@ class SNS(Screen):
                     print i, j
                     #print sta
             i += 1
-        logging.debug( "length of sns data "+ str(len(self.snsdata)))
+        print "length of sns data "+ str(len(self.snsdata))
         self.StatusListview.scroll_y = 1
         return True
     
     def my_y_callback(self,obj, value):
-        logging.debug('on listview', obj, 'scroll y changed to', value)
+        print('on listview', obj, 'scroll y changed to', value)
         
 class SNSApp(App):
     
@@ -318,13 +320,13 @@ class SNSApp(App):
     def load_channel(self):
         if not exists(self.channel_fn):
             return
-        with open(self.channel_fn,'r') as fd:
+        with open(self.channel_fn,'rb') as fd:
             channeldata = json.load(fd)
         self.sns.channeldata = channeldata
         
         
     def save_channel(self):
-        with open(self.channel_fn, 'w') as fd:
+        with open(self.channel_fn, 'wb') as fd:
             json.dump(self.sns.channeldata, fd, indent = 2)
         sp.save_config()
             
@@ -568,7 +570,7 @@ class SNSApp(App):
         self.sns.statusList[snsindex]['time'] += (time.clock()-starttime)
         self.sns.statusList[snsindex]['like'] = like
         
-        with open('conf/status.json', 'w') as fd:
+        with open('conf/status.json', 'wb') as fd:
             json.dump(self.sns.statusList, fd,indent = 2)
         
     def forward_status(self, message, text):

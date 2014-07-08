@@ -9,7 +9,7 @@ ignoring the time and the conversion of timezone
 
 '''
 
-__version__ = '1.2'
+__version__ = '1.3'
 
 import json
 import time
@@ -37,7 +37,7 @@ from kivy.factory import Factory
 from snsapi.snspocket import SNSPocket
 from snsapi.utils import utc2str
 
-from sns import SNSView, SNSListItem, SNSPopup, UpdateStatus, ForwardStatus, ReplyStatus, MSSPopup
+from sns import SNSView, SNSListItem, SNSPopup, UpdateStatus, ForwardStatus, ReplyStatus, MSSPopup, DividingUnicode
 from channel import ChannelListItem, Channel,  ChannelView
 from accessories import SaveConfigBubble,  PickPlatformView,  StatusBar,  GeneralOptions, DropDownMenu, AboutPopup, HelpPopup
 from extract_keywords import extractKeywords
@@ -121,7 +121,7 @@ class SNS(Screen):
         self.StatusListview.add_widget(self.statusGridLayout)
         
         if exists('conf/status.json'):
-            with open('conf/status.json','r') as fd:
+            with open('conf/status.json','rb') as fd:
                 statusdata = json.load(fd)
             self.statusList = statusdata
             
@@ -157,6 +157,11 @@ class SNS(Screen):
         title_text = '%s said at %s,' % (data.username, data.time)
         #title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
+        
+        self.getKeywords(content_text,data.username,data.time)
+        
+        content_text = DividingUnicode.div(content_text,30)
+        
         self.snsdata.append({'title':title_text, 
                              'content':content_text, 
                              'name':data.username,
@@ -164,8 +169,6 @@ class SNS(Screen):
         #scroll view operation
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
         self.statusGridLayout.add_widget(newItem)
-        
-        self.getKeywords(content_text,data.username,data.time)
 
     def getKeywords(self,status_content,status_username=None,status_time=None):
         '''
@@ -216,7 +219,7 @@ class SNS(Screen):
             index = len(self.statusList)-1
         #------------------------------------------------------#
                         
-        with open('conf/status.json', 'w') as fd:
+        with open('conf/status.json', 'wb') as fd:
             json.dump(self.statusList, fd,indent = 2)
             
         return index
@@ -317,13 +320,13 @@ class SNSApp(App):
     def load_channel(self):
         if not exists(self.channel_fn):
             return
-        with open(self.channel_fn,'r') as fd:
+        with open(self.channel_fn,'rb') as fd:
             channeldata = json.load(fd)
         self.sns.channeldata = channeldata
         
         
     def save_channel(self):
-        with open(self.channel_fn, 'w') as fd:
+        with open(self.channel_fn, 'wb') as fd:
             json.dump(self.sns.channeldata, fd, indent = 2)
         sp.save_config()
             
@@ -567,7 +570,7 @@ class SNSApp(App):
         self.sns.statusList[snsindex]['time'] += (time.clock()-starttime)
         self.sns.statusList[snsindex]['like'] = like
         
-        with open('conf/status.json', 'w') as fd:
+        with open('conf/status.json', 'wb') as fd:
             json.dump(self.sns.statusList, fd,indent = 2)
         
     def forward_status(self, message, text):

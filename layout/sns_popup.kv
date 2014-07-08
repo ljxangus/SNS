@@ -35,15 +35,15 @@
 			max_lines:2
 			size_hint_y:.2
 
-		TextInput:
+		Label:
 			text: root.content_data
 			font_name:"fonts/DroidSansFallback.ttf"
-			height: root.height - root.ids.popup_label.height
-			text_size:self.width,self.height
+			#height: root.height - root.ids.popup_label.height
+			text_size:self.size
+			size_hint: 1,1
 			valign:'top'
 			halign:'left'
 			font_size:'11dp'
-			#disabled:True
 
 		BoxLayout:
 			orientation:'horizontal'
@@ -71,7 +71,11 @@
 		orientation: 'vertical'
 		padding:'1dp'
 		Label:
+			valign:'middle'
+			halign:'center'
 			text: 'The app is created by Jonathan, thanks for enjoying.'
+			text_size: self.size
+			size_hint_x:1
 			
 <HelpPopup>:
 	size_hint: .5, .5
@@ -81,7 +85,10 @@
 		orientation: 'vertical'
 		padding:'1dp'
 		Label:
+			valign:'middle'
+			halign:'center'
 			text: 'You can enquire at https://github.com/ljxangus/SNS'
-			
+			text_size: self.size
+			size_hint_x:1
 
 

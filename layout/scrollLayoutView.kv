@@ -21,24 +21,26 @@
 			font_name:"fonts/DroidSansFallback.ttf"
 			bold: True
 			size_hint_y: .2
+			size_hint_x:1
 			on_release: app.click_sns(root.sns_index)
 
 	
 		GridLayout:
 			id:w_sns_gridlayout
-			cols: 2
-			row_force_default: True
-			row_default_height: 110
+			cols: 1
+			#row_force_default: True
+			#row_default_height: 110
 			#padding:'2dp'
 	
 			Label:
 				text: root.sns_content + '\n' + '[color=ff0099][ref=world]MORE[/ref][/color]'
-				text_size:self.width, self.height
+				text_size: self.size
 				valign:'top'
 				halign:'left'
 				font_size:'11dp'
 				font_name:"fonts/DroidSansFallback.ttf"
 				markup:True
+				size_hint_x:1
 				on_ref_press:app.show_status(root.sns_index)
 				mipmap:True
 			#Image:
@@ -89,14 +91,6 @@
 				font_size: '12sp'
 				size_hint_x: None
 				on_release: app.more_status_sns()
-								
-			Button:
-				text: 'Menu'
-				font_size: '12sp'
-				size_hint_x: None
-				width: self.height*2.5
-				bold:True
-				on_release: app.OpenDropDownMenu(self)
 
 			Button:
 				size_hint_x: None
@@ -104,6 +98,14 @@
 				width: self.height
 				background_normal: 'data/refresh.png'
 				on_release: app.refresh_status_sns()
+												
+			Button:
+				text: 'Menu'
+				font_size: '12sp'
+				size_hint_x: None
+				width: self.height*2.5
+				bold:True
+				on_release: app.OpenDropDownMenu(self)
 
 		BoxLayout:
 			orientation: 'horizontal'
