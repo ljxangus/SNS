@@ -1,0 +1,128 @@
+#-*- coding:utf-8 -*-
+<SNSListItem>:
+	height: '150sp'
+	size_hint_y: None
+	canvas:
+        Color:
+            rgb: .3, .3, .3
+        Rectangle:
+            pos: self.pos
+            size: self.width, 1
+	BoxLayout:
+		orientation:'vertical'
+		#padding:'2dp'
+	
+		Button:
+			text: root.sns_title
+			text_size:self.width-10, self.height
+			valign:'top'
+			halign:'left'
+			font_size:'12sp'
+			font_name:"fonts/DroidSansFallback.ttf"
+			bold: True
+			size_hint_y: .2
+			size_hint_x:1
+			on_release: app.click_sns(root.sns_index)
+
+	
+		GridLayout:
+			id:w_sns_gridlayout
+			cols: 1
+			#row_force_default: True
+			#row_default_height: 110
+			#padding:'2dp'
+	
+			Label:
+				text: root.sns_content + '\n' + '[color=ff0099][ref=world]MORE[/ref][/color]'
+				text_size: self.size
+				valign:'top'
+				halign:'left'
+				font_size:'11dp'
+				font_name:"fonts/DroidSansFallback.ttf"
+				markup:True
+				size_hint_x:1
+				on_ref_press:app.show_status(root.sns_index)
+				mipmap:True
+			#Image:
+				#source: 'data/like.png'
+				#size_hint_x:0.05
+				#width: 10
+				#height: self.width
+				#mipmap:True
+
+			
+<SNS>:
+	GridLayout:
+		cols:1
+		BoxLayout:
+
+			orientation: 'horizontal'
+			size_hint_y: None
+			height: '48dp'
+			padding: '1dp'
+
+			canvas:
+				Color:
+					rgb: .3, .3, .3
+				Rectangle:
+					pos: self.pos
+					size: self.size
+
+			Image:
+				source: 'data/icon.png'
+				mipmap: True
+				size_hint_x: None
+				width: self.height
+
+			#Label:
+				#text: 'SNS Reader'
+				#font_size: '16sp'
+				#bold:True
+
+			Spinner:
+				id: _channel_spinner
+				font_size: '12sp'
+				text: 'All Platform'
+				size_hint_x: None
+				width: self.height*2.5
+
+			#Button:
+				#text: 'More Status'
+				#font_size: '12sp'
+				#size_hint_x: None
+				#on_release: app.more_status_sns()
+
+			Button:
+				size_hint_x: None
+				border: (0,0,0,0)
+				width: self.height
+				background_normal: 'data/refresh.png'
+				on_release: app.refresh_status_sns()
+												
+			Button:
+				text: 'Menu'
+				font_size: '12sp'
+				size_hint_x: None
+				width: self.height*2.5
+				bold:True
+				on_release: app.OpenDropDownMenu(self)
+
+		BoxLayout:
+			orientation: 'horizontal'
+			size_hint_y: .9
+			ScrollView:
+				id:_scroll_view_status
+				do_scroll_x: False			
+		
+		AnchorLayout:
+			anchor_x: 'center'
+			anchor_y: 'bottom'
+			size_hint_y:.1
+			
+			BoxLayout:				
+				StatusBar:
+					id: _status_bar
+					size_hint: 1,None
+					height: 40
+
+	

@@ -126,7 +126,7 @@ class SNS(Screen):
             self.statusList = statusdata
             
         #binding test
-        self.StatusListview.bind(scroll_y=self.my_y_callback)
+        #self.StatusListview.bind(scroll_y=self.my_y_callback)
         #for status in self.statusList:
          #   print status['status_content']
 
@@ -158,7 +158,7 @@ class SNS(Screen):
         title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
         
-        self.getKeywords(content_text,data.username,data.time)
+        #self.getKeywords(content_text,data.username,data.time)
         
         content_text = DividingUnicode.div(content_text,30)
         
@@ -234,6 +234,8 @@ class SNS(Screen):
         temp_length = len(self.snsdata)
         del self.all_status[0:len(self.all_status)]
         del self.snsdata[0:len(self.snsdata)]
+        self.statusGridLayout.clear_widgets()
+        
         if not self.current_channel == None:
             if temp_length>0:
                 hl = sp.home_timeline(20+temp_length, self.current_channel)
@@ -249,10 +251,7 @@ class SNS(Screen):
         for s in hl:
             if self.insert_status(s, i):
                 i += 1
-                
-        print "length of sns data "+ str(len(self.snsdata))
-        print 'the type of snsdata is '+str(type(self.snsdata))
-        print 'the type of all_status is '+str(type(self.all_status))
+
         self.StatusListview.scroll_y = 1
         return True
         
@@ -266,7 +265,6 @@ class SNS(Screen):
         for sta in more_home_timeline:
             if sta == first_status:
                 first_in_more = i
-                print 'first status in more status ' + str(i)
                 break
             i+=1
         #print first_status
@@ -280,7 +278,6 @@ class SNS(Screen):
                     print i, j
                     #print sta
             i += 1
-        print "length of sns data "+ str(len(self.snsdata))
         self.StatusListview.scroll_y = 1
         return True
     
@@ -295,7 +292,7 @@ class SNSApp(App):
         Builder.load_file('layout/sns.kv')
         Builder.load_file('layout/sns_popup.kv')
         Builder.load_file('layout/channel_view.kv')
-        Builder.load_file('layout/scrollLayoutView.kv')
+        Builder.load_file('layout/scrollLayoutView_android.kv')
         Builder.load_file('layout/channel_list_layout.kv')
         Builder.load_file('layout/post_status.kv')
         

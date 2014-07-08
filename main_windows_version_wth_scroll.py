@@ -234,6 +234,8 @@ class SNS(Screen):
         temp_length = len(self.snsdata)
         del self.all_status[0:len(self.all_status)]
         del self.snsdata[0:len(self.snsdata)]
+        self.statusGridLayout.clear_widgets()
+        
         if not self.current_channel == None:
             if temp_length>0:
                 hl = sp.home_timeline(20+temp_length, self.current_channel)
