@@ -110,6 +110,8 @@ class SNS(Screen):
         self.ids._channel_spinner.bind(text=self.change_channel)
         self.ch.sort()
         self.ch.insert(0, 'All Platform')
+        self.STATUS_SIZE = 20
+        self.moreClickTimes = 0
         self.ids._channel_spinner.values = self.ch
         self.dropdownmenu = DropDownMenu()
         
@@ -126,7 +128,7 @@ class SNS(Screen):
             self.statusList = statusdata
             
         #binding test
-        #self.StatusListview.bind(scroll_y=self.my_y_callback)
+        self.StatusListview.bind(scroll_y=self.my_y_callback)
         #for status in self.statusList:
          #   print status['status_content']
 
@@ -154,11 +156,11 @@ class SNS(Screen):
         data = status.parsed
         try: text = data.title
         except: text = data.text
-        #title_text = '%s said at %s,' % (data.username, data.time)
-        title_text = '%s at %s' % (data.username, utc2str(data.time))
+        title_text = '%s said at %s,' % (data.username, data.time)
+        #title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
         
-        #self.getKeywords(content_text,data.username,data.time)
+        self.getKeywords(content_text,data.username,data.time)
         
         content_text = DividingUnicode.div(content_text,30)
         
@@ -231,6 +233,7 @@ class SNS(Screen):
             'sns_title': item['title']}
 
     def refresh_status(self):
+        self.moreClickTimes = 0
         temp_length = len(self.snsdata)
         del self.all_status[0:len(self.all_status)]
         del self.snsdata[0:len(self.snsdata)]
@@ -238,11 +241,11 @@ class SNS(Screen):
         
         if not self.current_channel == None:
             if temp_length>0:
-                hl = sp.home_timeline(20+temp_length, self.current_channel)
+                hl = sp.home_timeline(self.STATUS_SIZE+temp_length, self.current_channel)
             else:
-                hl = sp.home_timeline(20, self.current_channel)
+                hl = sp.home_timeline(self.STATUS_SIZE, self.current_channel)
         else:
-            hl = sp.home_timeline(20, self.current_channel)
+            hl = sp.home_timeline(self.STATUS_SIZE, self.current_channel)
 
         i = 0
         global first_status
@@ -251,34 +254,51 @@ class SNS(Screen):
         for s in hl:
             if self.insert_status(s, i):
                 i += 1
-
+                
+        print "length of sns data "+ str(len(self.snsdata))
+        print 'the type of snsdata is '+str(type(self.snsdata))
+        print 'the type of all_status is '+str(type(self.all_status))
         self.StatusListview.scroll_y = 1
         return True
         
     def more_status(self):
         print 'The length of the sp is ' + str(len(sp))
-        n  = len(self.all_status) + len(sp) * 5
+        self.moreClickTimes = self.moreClickTimes + 1
+        n  = len(self.all_status) + len(sp) * 10 * self.moreClickTimes
+        print 'The number n is ' + str(n)
         more_home_timeline = sp.home_timeline(n)
         first_in_more = len(more_home_timeline)
         global first_status
+        
+        '''
         i = 0
         for sta in more_home_timeline:
             if sta == first_status:
                 first_in_more = i
+                print 'first status in more status ' + str(i)
                 break
             i+=1
-        #print first_status
+        '''
+        
+        #Find the original fisrt status    
+        for i in range(len(more_home_timeline)):
+            if more_home_timeline[i]==first_status:
+                first_in_more = i
+                print 'first status in more status ' + str(i)
+                break
         
         i=0
-        j=0
+        j=len(self.snsdata)
         for sta in more_home_timeline:
-            if i >= first_in_more+10:
+            if i >= first_in_more+self.STATUS_SIZE:
                 if self.insert_status(sta, j):
                     j+=1
                     print i, j
                     #print sta
             i += 1
-        self.StatusListview.scroll_y = 1
+        print "length of sns data "+ str(len(self.snsdata))
+            
+        #self.StatusListview.scroll_y = 1
         return True
     
     def my_y_callback(self,obj, value):
