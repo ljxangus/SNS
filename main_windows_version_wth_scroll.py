@@ -100,7 +100,7 @@ class SNS(Screen):
     snsdata = ListProperty()
     channeldata = ListProperty()
     all_status = []
-    first_status = None
+    
     
     def __init__(self, **kwargs):
         super(SNS, self).__init__(**kwargs)
@@ -112,6 +112,7 @@ class SNS(Screen):
         self.ch.insert(0, 'All Platform')
         self.STATUS_SIZE = 20
         self.moreClickTimes = 0
+        self.first_status = None
         self.ids._channel_spinner.values = self.ch
         self.dropdownmenu = DropDownMenu()
         
@@ -128,7 +129,7 @@ class SNS(Screen):
             self.statusList = statusdata
             
         #binding test
-        self.StatusListview.bind(scroll_y=self.my_y_callback)
+        #self.StatusListview.bind(scroll_y=self.my_y_callback)
         #for status in self.statusList:
          #   print status['status_content']
 
@@ -248,16 +249,15 @@ class SNS(Screen):
             hl = sp.home_timeline(self.STATUS_SIZE, self.current_channel)
 
         i = 0
-        global first_status
+        
         if len(hl)>0:
-            first_status = hl[0]
+            self.first_status = hl[0]
+            print 'first status inserted'
         for s in hl:
             if self.insert_status(s, i):
                 i += 1
                 
         print "length of sns data "+ str(len(self.snsdata))
-        print 'the type of snsdata is '+str(type(self.snsdata))
-        print 'the type of all_status is '+str(type(self.all_status))
         self.StatusListview.scroll_y = 1
         return True
         
@@ -266,9 +266,14 @@ class SNS(Screen):
         self.moreClickTimes = self.moreClickTimes + 1
         n  = len(self.all_status) + len(sp) * 10 * self.moreClickTimes
         print 'The number n is ' + str(n)
-        more_home_timeline = sp.home_timeline(n)
+        more_home_timeline = sp.home_timeline(n,self.current_channel)
         first_in_more = len(more_home_timeline)
-        global first_status
+        
+        if self.first_status == None:
+            self.refresh_status()
+            self.moreClickTimes = self.moreClickTimes - 1
+            return False
+
         
         '''
         i = 0
@@ -282,10 +287,11 @@ class SNS(Screen):
         
         #Find the original fisrt status    
         for i in range(len(more_home_timeline)):
-            if more_home_timeline[i]==first_status:
+            if more_home_timeline[i].parsed.text==self.first_status.parsed.text:
                 first_in_more = i
                 print 'first status in more status ' + str(i)
                 break
+        
         
         i=0
         j=len(self.snsdata)
@@ -293,12 +299,11 @@ class SNS(Screen):
             if i >= first_in_more+self.STATUS_SIZE:
                 if self.insert_status(sta, j):
                     j+=1
-                    print i, j
-                    #print sta
+                    #print i, j
             i += 1
         print "length of sns data "+ str(len(self.snsdata))
             
-        #self.StatusListview.scroll_y = 1
+        self.StatusListview.scroll_y = 1
         return True
     
     def my_y_callback(self,obj, value):
