@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 <SNSPopup>:
-	size_hint: .5, .3
+	size_hint: .7, .5
 	title: 'Menu'
 	BoxLayout:
 		orientation: 'vertical'
@@ -16,6 +16,10 @@
 		Button:
 			text: 'Update'
 			on_press: app.go_update_status()
+			on_press: root.dismiss()
+		Button:
+			text: 'Details'
+			on_press: app.show_status(root.sns_index)
 			on_press: root.dismiss()
 
 <MSSPopup@Popup>:
@@ -64,7 +68,7 @@
 				on_press: root.dismiss()
 
 <AboutPopup>:
-	size_hint: .5, .5
+	size_hint: .8, .8
 	title: 'About the author'
 	auto_dismiss: True
 	BoxLayout:
@@ -78,7 +82,7 @@
 			size_hint_x:1
 			
 <HelpPopup>:
-	size_hint: .5, .5
+	size_hint: .8, .8
 	title: 'HELP INFO'
 	auto_dismiss: True
 	BoxLayout:
@@ -87,8 +91,10 @@
 		Label:
 			valign:'middle'
 			halign:'center'
-			text: 'You can enquire at https://github.com/ljxangus/SNS'
+			text: 'You can enquire at [color=ff0099][ref=world]https://github.com/ljxangus/SNS[/ref][/color]'
 			text_size: self.size
 			size_hint_x:1
+			markup:True
+			on_ref_press:app.open_url('https://github.com/ljxangus/SNS')
 
 

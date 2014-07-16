@@ -9,13 +9,17 @@ ignoring the time and the conversion of timezone
 
 '''
 
-__version__ = '1.3'
+__version__ = '1.4'
 
 import json
 import time
 import kivy
+from kivy.logger import Logger
 from kivy.config import Config
 import kivy.resources
+import kivy.clock
+import webbrowser
+
 from os.path import join, exists
 from kivy.app import App
 from kivy.lang import Builder
@@ -33,6 +37,7 @@ from kivy.clock import Clock
 from kivy.uix.listview import ListView
 from kivy.adapters.listadapter import ListAdapter
 from kivy.factory import Factory
+from kivy.core.window import Window
 
 from snsapi.snspocket import SNSPocket
 from snsapi.utils import utc2str
@@ -110,7 +115,10 @@ class SNS(Screen):
         self.ids._channel_spinner.bind(text=self.change_channel)
         self.ch.sort()
         self.ch.insert(0, 'All Platform')
+        
         self.STATUS_SIZE = 20
+        self.SHOW_ON_SCREEN_FREQUENCE = 0.5
+        
         self.moreClickTimes = 0
         self.first_status = None
         self.ids._channel_spinner.values = self.ch
@@ -130,6 +138,7 @@ class SNS(Screen):
             
         #binding test
         #self.StatusListview.bind(scroll_y=self.my_y_callback)
+        Logger.debug (str(Window.size))
         #for status in self.statusList:
          #   print status['status_content']
 
@@ -138,9 +147,8 @@ class SNS(Screen):
         if not channel or channel == self.current_channel: return
         self.current_channel = channel != 'All Platform' and channel or None
         self.current_channel_intext = channel != 'All Platform' and channel or 'All Platform'
-        print 'self.current_channel_intext is ' + self.current_channel_intext
-        print 'self.current_channel is ' 
-        print self.current_channel
+        Logger.debug('self.current_channel_intext is ' + str(self.current_channel_intext))
+        Logger.debug('self.current_channel is ' + str(self.current_channel))
         return True
         
     def insert_status(self,status,status_index = None):
@@ -161,19 +169,24 @@ class SNS(Screen):
         #title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
         
-        self.getKeywords(content_text,data.username,data.time)
+        try:origin_name = status.parsed.username_origin
+        except:origin_name = None
+        
+        self.getKeywords(content_text,data.username,data.time,status.ID,origin_name)
         
         content_text = DividingUnicode.div(content_text,30)
         
         self.snsdata.append({'title':title_text, 
                              'content':content_text, 
                              'name':data.username,
-                             'time':data.time})
+                             'time':data.time,
+                             'ID':status.ID,
+                             'origin_name':origin_name})
         #scroll view operation
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
         self.statusGridLayout.add_widget(newItem)
 
-    def getKeywords(self,status_content,status_username=None,status_time=None):
+    def getKeywords(self,status_content,status_username=None,status_time=None,statusID=None,username_origin=None):
         '''
         to store full information, we did extract the keywords, 
         now we just save the full status to keep all useful information
@@ -205,26 +218,32 @@ class SNS(Screen):
         statusInList = False
         index = 0
         for status in self.statusList:
-            if status_content == status['status_content']:
+            if statusID == status['status_ID']:
                 index = self.statusList.index(status)
                 status['frequency'] += 1
                 statusInList = True
         
         if not statusInList:
-            self.statusList.append({'status_content':status_content,
+            self.statusList.append({'status_ID':statusID,
+                                    'status_content':status_content,
                                     'status_username':status_username,
+                                    'user_name_origin':username_origin,
                                     'status_time':status_time,
                                     'frequency' : 1,
                                     'time' : 0,
                                     'like' :None,
-                                    'currentTime' :time.strftime("%a, %d %b %Y %H:%M:%S")
+                                    'currentTime' :time.strftime("%a, %d %b %Y %H:%M:%S"),
+                                    'show_on_screen_time':0,
+                                    'speed_of_on_Screen':0
                                     })
             index = len(self.statusList)-1
         #------------------------------------------------------#
-                        
+
+        '''                        
         with open('conf/status.json', 'wb') as fd:
             json.dump(self.statusList, fd,indent = 2)
-            
+        '''
+                
         return index
 
     def sns_args_converter(self, row_index, item):
@@ -234,6 +253,7 @@ class SNS(Screen):
             'sns_title': item['title']}
 
     def refresh_status(self):
+        Clock.unschedule(self.status_shown_on_screen)
         self.moreClickTimes = 0
         temp_length = len(self.snsdata)
         del self.all_status[0:len(self.all_status)]
@@ -252,20 +272,23 @@ class SNS(Screen):
         
         if len(hl)>0:
             self.first_status = hl[0]
-            print 'first status inserted'
+            Logger.debug('first status inserted')
         for s in hl:
             if self.insert_status(s, i):
                 i += 1
                 
-        print "length of sns data "+ str(len(self.snsdata))
+        Logger.debug("length of sns data " +str (len(self.snsdata)))        
         self.StatusListview.scroll_y = 1
+        
+        #schedule the clock
+        Clock.schedule_interval(self.status_shown_on_screen, self.SHOW_ON_SCREEN_FREQUENCE)
         return True
         
     def more_status(self):
-        print 'The length of the sp is ' + str(len(sp))
+        Logger.debug('The length of the sp is ' + str(len(sp)))
         self.moreClickTimes = self.moreClickTimes + 1
         n  = len(self.all_status) + len(sp) * 10 * self.moreClickTimes
-        print 'The number n is ' + str(n)
+        Logger.debug('The number n is ' + str(n))
         more_home_timeline = sp.home_timeline(n,self.current_channel)
         first_in_more = len(more_home_timeline)
         
@@ -289,7 +312,7 @@ class SNS(Screen):
         for i in range(len(more_home_timeline)):
             if more_home_timeline[i].parsed.text==self.first_status.parsed.text:
                 first_in_more = i
-                print 'first status in more status ' + str(i)
+                Logger.debug('first status in more status ' + str(i))
                 break
         
         
@@ -301,13 +324,36 @@ class SNS(Screen):
                     j+=1
                     #print i, j
             i += 1
-        print "length of sns data "+ str(len(self.snsdata))
+        Logger.debug("length of sns data "+ str(len(self.snsdata)))
             
         self.StatusListview.scroll_y = 1
         return True
     
     def my_y_callback(self,obj, value):
-        print('on listview', obj, 'scroll y changed to', value)
+        Logger.debug('on listview', obj, 'scroll y changed to', value)
+        Logger.debug('The status on the screen is ', self.status_shown_on_screen(obj, value))
+    
+    def scroll_speed(self):
+        pass
+    
+    def status_shown_on_screen(self,obj=None, scroll_y=None):
+        if scroll_y == None:
+            scroll_y = self.StatusListview.scroll_y
+        
+        head_status = round((1-scroll_y)*(len(self.snsdata)-2.8))
+        status_list_height = Window.size[1] - 90
+        status_per_screen = round(status_list_height / 150)
+        tail_status = head_status + status_per_screen - 1
+        
+        #record the shown on screen time
+        for i in range(int(head_status),int(tail_status+1)):
+            self.statusList[i]['show_on_screen_time'] += self.SHOW_ON_SCREEN_FREQUENCE
+        
+        return (head_status,tail_status)
+    
+    def save_status_feedback(self,obj=None, value=None):
+        with open('conf/status.json', 'wb') as fd:
+            json.dump(self.statusList, fd,indent = 2)
         
 class SNSApp(App):
     
@@ -330,7 +376,19 @@ class SNSApp(App):
         root = ScreenManager(transition=self.transition)
         root.add_widget(self.sns)
         
+        Config.read('config.ini')
+        
+        Config.set('graphics', 'height','1280')
+        Config.set('graphics', 'width','720')
+        
+        Config.set('kivy','log_level','debug')
+        Config.set('kivy','log_dir','logs')
+        Config.set('kivy','log_enable ','1')
+        Config.set('kivy','log_name','kivy_%y-%m-%d_%_.txt')
+        Config.write()
+        
         self.choose_status_index = 0
+        Clock.schedule_interval(self.sns.save_status_feedback,5)
         
         time.clock()
 
@@ -338,6 +396,20 @@ class SNSApp(App):
             #self.sns.insert_status(s)
         
         return root
+    
+    def on_start(self):
+        print 'Program start.'
+        
+    def on_stop(self):
+        self.sns.save_status_feedback()
+        self.save_channel()
+        self.save_config()
+        
+    def on_pause(self):
+        return True
+    
+    def on_resume(self):
+        pass
 
     def load_channel(self):
         if not exists(self.channel_fn):
@@ -414,7 +486,7 @@ class SNSApp(App):
         if temp_channel_platform in ('RenrenBlog', 'RenrenShare', 'RenrenStatus', 'SinaWeiboStatus', 'TencentWeiboStatus', ) :
             temp_channel['auth_info']['callback_url'] = channel.get('callback_url')
          
-        print temp_channel
+        Logger.debug(temp_channel)
          
         self.save_channel()
         sp.auth()
@@ -440,12 +512,12 @@ class SNSApp(App):
          
             if temp_channel_platform in ('RSS', ):
                 SNSChannel['url'] = channel.get('url')
-                print 'channel get url is: ' + channel.get('url')
+                Logger.debug('channel get url is: ' + channel.get('url'))
 
             if temp_channel_platform in ('RenrenBlog', 'RenrenShare', 'RenrenStatus', 'SinaWeiboStatus', 'TencentWeiboStatus', ) :
                 SNSChannel['auth_info']['callback_url'] = channel.get('callback_url')
         
-            print SNSChannel
+            Logger.debug(SNSChannel)
 
             sp.add_channel(SNSChannel)
             sp.auth(SNSChannel['channel_name'])
@@ -562,7 +634,7 @@ class SNSApp(App):
         print snsindex
         new_sns_popup = SNSPopup()
         new_sns_popup.change_index(snsindex)
-        print 'popup has index ' + str(new_sns_popup.sns_index)
+        Logger.debug('popup has index ' + str(new_sns_popup.sns_index))
         new_sns_popup.open()
         
     def show_status(self, snsindex):
@@ -570,19 +642,20 @@ class SNSApp(App):
         content = self.sns.snsdata[snsindex]['content']
         name = self.sns.snsdata[snsindex]['name']
         statustime = self.sns.snsdata[snsindex]['time']
+        username_origin = self.sns.snsdata[snsindex]['origin_name']
+        ID = self.sns.snsdata[snsindex]['ID']
 
-        indexInStatusList = self.sns.getKeywords(content,name,statustime)
+        indexInStatusList = self.sns.getKeywords(content,name,statustime,ID,username_origin)
         
         new_content_popup = MSSPopup(sns_index=snsindex)
-        print 'New popup build'
+        Logger.debug('New popup build')
         startTime = time.clock()
-        print startTime
         new_content_popup.change_index(snsindex, 
                                        self.sns.snsdata[snsindex]['title'], 
                                        content,
                                        indexInStatusList,
                                        startTime)
-        print 'StatusMSSPopup has index ' + str(new_content_popup.sns_index)
+        Logger.debug('StatusMSSPopup has index ' + str(new_content_popup.sns_index))
         
         new_content_popup.open()
         
@@ -596,16 +669,16 @@ class SNSApp(App):
             json.dump(self.sns.statusList, fd,indent = 2)
         
     def forward_status(self, message, text):
-        print 'forward_status to ' + self.sns.current_channel_intext 
+        Logger.debug('forward_status to ' + self.sns.current_channel_intext)
         sp.forward(message, text, self.sns.current_channel)
         
     def reply_status(self, message, text):
-        print 'reply_status to ' + message.ID.channel
+        Logger.debug('reply_status to ' + message.ID.channel)
         sp.reply(message, text)
         
     def update_status(self, post_content):
-        print 'update_status to ' + self.sns.current_channel_intext
-        print post_content
+        Logger.debug('update_status to ' + self.sns.current_channel_intext)
+        Logger.debug(post_content)
         if sp.update(post_content, self.sns.current_channel):
             return True
         else:
@@ -664,6 +737,9 @@ class SNSApp(App):
     def helpPopup(self):
         newHelpPopup = HelpPopup()
         newHelpPopup.open()
+        
+    def open_url(self,url):
+        webbrowser.open(url)
         
     @property
     def channel_fn(self):

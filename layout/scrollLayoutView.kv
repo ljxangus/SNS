@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 <SNSListItem>:
-	height: '150sp'
+	height: '150dp'
 	size_hint_y: None
 	canvas:
         Color:
@@ -33,15 +33,16 @@
 			#padding:'2dp'
 	
 			Label:
-				text: root.sns_content + '\n' + '[color=ff0099][ref=world]MORE[/ref][/color]'
+				#text: root.sns_content + '\n' + '[color=ff0099][ref=world]MORE[/ref][/color]'
+				text: root.sns_content
 				text_size: self.size
 				valign:'top'
 				halign:'left'
 				font_size:'11dp'
 				font_name:"fonts/DroidSansFallback.ttf"
-				markup:True
+				#markup:True
 				size_hint_x:1
-				on_ref_press:app.show_status(root.sns_index)
+				#on_ref_press:app.show_status(root.sns_index)
 				mipmap:True
 			#Image:
 				#source: 'data/like.png'
