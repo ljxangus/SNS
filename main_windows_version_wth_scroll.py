@@ -38,6 +38,7 @@ from kivy.uix.listview import ListView
 from kivy.adapters.listadapter import ListAdapter
 from kivy.factory import Factory
 from kivy.core.window import Window
+from kivy.uix.image import AsyncImage, Image
 
 from snsapi.snspocket import SNSPocket
 from snsapi.utils import utc2str
@@ -161,7 +162,7 @@ class SNS(Screen):
         self.__insert_status(status,status_index)
         return True
 
-    def __insert_status(self,status,index):
+    def __insert_status(self,status,index):        
         data = status.parsed
         try: text = data.title
         except: text = data.text
@@ -176,6 +177,7 @@ class SNS(Screen):
         
         content_text = DividingUnicode.div(content_text,30)
         
+        #status inserted to the snsdata                       
         self.snsdata.append({'title':title_text, 
                              'content':content_text, 
                              'name':data.username,
@@ -184,6 +186,27 @@ class SNS(Screen):
                              'origin_name':origin_name})
         #scroll view operation
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
+        
+        #---------------------------------------------------------------------#
+        #Finding attachment and handling
+        itemlayout = newItem.ids.w_sns_gridlayout
+        Logger.debug(str(itemlayout))
+        
+        try: attachs = data.attachments
+        except: attachs = None
+        
+        try: attachment_type = attachs[0]['type']
+        except: attachment_type = None
+        
+        if attachs!= None:
+            Logger.debug('There exist attachments for the item ')
+                
+        if attachment_type == 'picture':
+            if attachs[0]['format'] == 'link':
+                att_image = AsyncImage(source=attachs[0]['data'])
+                itemlayout.add_widget(att_image)
+                
+        #---------------------------------------------------------------------#
         self.statusGridLayout.add_widget(newItem)
 
     def getKeywords(self,status_content,status_username=None,status_time=None,statusID=None,username_origin=None):
@@ -346,8 +369,8 @@ class SNS(Screen):
         tail_status = head_status + status_per_screen - 1
         
         #record the shown on screen time
-        for i in range(int(head_status),int(tail_status+1)):
-            self.statusList[i]['show_on_screen_time'] += self.SHOW_ON_SCREEN_FREQUENCE
+        #for i in range(int(head_status),int(tail_status+1)):
+            #self.statusList[i]['show_on_screen_time'] += self.SHOW_ON_SCREEN_FREQUENCE
         
         return (head_status,tail_status)
     
@@ -517,7 +540,7 @@ class SNSApp(App):
             if temp_channel_platform in ('RenrenBlog', 'RenrenShare', 'RenrenStatus', 'SinaWeiboStatus', 'TencentWeiboStatus', ) :
                 SNSChannel['auth_info']['callback_url'] = channel.get('callback_url')
         
-            Logger.debug(SNSChannel)
+            #Logger.debug(SNSChannel)
 
             sp.add_channel(SNSChannel)
             sp.auth(SNSChannel['channel_name'])
