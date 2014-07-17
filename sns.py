@@ -12,6 +12,7 @@ from kivy.properties import ListProperty, StringProperty, \
         NumericProperty, BooleanProperty, DictProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
+from kivy.uix.image import AsyncImage, Image
         
 class SNSView(Screen):
 
@@ -41,14 +42,34 @@ class MSSPopup(Popup):
     content_data= StringProperty()
     sns_indexinlist = 0
     startTime = 0
-    def change_index(self, index, title, content, indexinlist,start):
+    attachments = None
+    def change_index(self, index, title, content, indexinlist,start,attach=None):
         self.sns_index = index
         self.title_data = title #app.sns.snsdata[index]['title']
         self.content_data = content #app.sns.snsdata[index]['content']
         self.sns_indexinlist = indexinlist
         self.startTime = start
+        self.attachments = attach
         
         self.content_data = DividingUnicode.div(self.content_data, 20)
+        
+    def add_attachments(self):
+        if self.attachments == None:
+            return False
+        
+        attachment_layout = self.ids.w_popup_attachments
+        
+        #---------------------Add the attachment to the itemview----------------------# 
+        for att in self.attachments:
+            if att['type'] == 'picture':
+                try: index = att['format'].index('link')
+                except: index = None
+                if index != None:
+                    att_image = AsyncImage(source=att['data'])
+                    attachment_layout.add_widget(att_image)
+                
+        #---------------------------------------------------------------------#
+        return True
         
 class UpdateStatus(Screen):
     post_content = StringProperty()

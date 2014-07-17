@@ -139,7 +139,7 @@ class SNS(Screen):
             
         #binding test
         #self.StatusListview.bind(scroll_y=self.my_y_callback)
-        Logger.debug (str(Window.size))
+        Logger.debug ('The device window size is ' + str(Window.size))
         #for status in self.statusList:
          #   print status['status_content']
 
@@ -173,43 +173,44 @@ class SNS(Screen):
         try:origin_name = status.parsed.username_origin
         except:origin_name = None
         
-        self.getKeywords(content_text,data.username,data.time,status.ID,origin_name)
+        #---------------Finding attachment and handling----------------------#
+
+        try: attachs = data.attachments
+        except: attachs = None
         
+        self.getKeywords(content_text,data.username,data.time,status.ID,origin_name,attachs)
         content_text = DividingUnicode.div(content_text,30)
         
-        #status inserted to the snsdata                       
+        #-------------------status inserted to the snsdata------------------------#
+                               
         self.snsdata.append({'title':title_text, 
                              'content':content_text, 
                              'name':data.username,
                              'time':data.time,
                              'ID':status.ID,
-                             'origin_name':origin_name})
+                             'origin_name':origin_name,
+                             'attachments':attachs})
         #scroll view operation
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
         
-        #---------------------------------------------------------------------#
-        #Finding attachment and handling
+        #---------------------Add the attachment to the itemview----------------------# 
         itemlayout = newItem.ids.w_sns_gridlayout
-        Logger.debug(str(itemlayout))
-        
-        try: attachs = data.attachments
-        except: attachs = None
         
         try: attachment_type = attachs[0]['type']
         except: attachment_type = None
-        
-        if attachs!= None:
-            Logger.debug('There exist attachments for the item ')
                 
         if attachment_type == 'picture':
-            if attachs[0]['format'] == 'link':
+            try: index = attachs[0]['format'].index('link')
+            except: index = None
+            if index != None:
                 att_image = AsyncImage(source=attachs[0]['data'])
                 itemlayout.add_widget(att_image)
                 
         #---------------------------------------------------------------------#
         self.statusGridLayout.add_widget(newItem)
 
-    def getKeywords(self,status_content,status_username=None,status_time=None,statusID=None,username_origin=None):
+    def getKeywords(self,status_content,status_username=None,status_time=None,
+                    statusID=None,username_origin=None,attachments=None):
         '''
         to store full information, we did extract the keywords, 
         now we just save the full status to keep all useful information
@@ -257,7 +258,8 @@ class SNS(Screen):
                                     'like' :None,
                                     'currentTime' :time.strftime("%a, %d %b %Y %H:%M:%S"),
                                     'show_on_screen_time':0,
-                                    'speed_of_on_Screen':0
+                                    'speed_of_on_Screen':0,
+                                    'attachments_contain':attachments
                                     })
             index = len(self.statusList)-1
         #------------------------------------------------------#
@@ -667,8 +669,9 @@ class SNSApp(App):
         statustime = self.sns.snsdata[snsindex]['time']
         username_origin = self.sns.snsdata[snsindex]['origin_name']
         ID = self.sns.snsdata[snsindex]['ID']
+        attachments = self.sns.snsdata[snsindex]['attachments']
 
-        indexInStatusList = self.sns.getKeywords(content,name,statustime,ID,username_origin)
+        indexInStatusList = self.sns.getKeywords(content,name,statustime,ID,username_origin,attachments)
         
         new_content_popup = MSSPopup(sns_index=snsindex)
         Logger.debug('New popup build')
@@ -677,7 +680,12 @@ class SNSApp(App):
                                        self.sns.snsdata[snsindex]['title'], 
                                        content,
                                        indexInStatusList,
-                                       startTime)
+                                       startTime,
+                                       attachments)
+        Logger.debug('adding the attachments to the popup')
+        
+        new_content_popup.add_attachments()
+        
         Logger.debug('StatusMSSPopup has index ' + str(new_content_popup.sns_index))
         
         new_content_popup.open()
