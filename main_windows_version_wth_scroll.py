@@ -178,7 +178,7 @@ class SNS(Screen):
         try: attachs = data.attachments
         except: attachs = None
         
-        self.getKeywords(content_text,data.username,data.time,status.ID,origin_name,attachs)
+        self.getKeywords(content_text,data.username,data.time,status.ID,origin_name,attachs,False)
         content_text = DividingUnicode.div(content_text,30)
         
         #-------------------status inserted to the snsdata------------------------#
@@ -194,23 +194,21 @@ class SNS(Screen):
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
         
         #---------------------Add the attachment to the itemview----------------------# 
-        itemlayout = newItem.ids.w_sns_gridlayout
-        
-        try: attachment_type = attachs[0]['type']
-        except: attachment_type = None
-                
-        if attachment_type == 'picture':
-            try: index = attachs[0]['format'].index('link')
-            except: index = None
-            if index != None:
-                att_image = AsyncImage(source=attachs[0]['data'])
-                itemlayout.add_widget(att_image)
+        itemlayout = newItem.ids.attachment_layout_item
+         
+        for att in attachs:
+            if att['type'] == 'picture':
+                try: index = att['format'].index('link')
+                except: index = None
+                if index != None:
+                    att_image = AsyncImage(source=att['data'],halign='top',valign='left')
+                    itemlayout.add_widget(att_image)
                 
         #---------------------------------------------------------------------#
         self.statusGridLayout.add_widget(newItem)
 
     def getKeywords(self,status_content,status_username=None,status_time=None,
-                    statusID=None,username_origin=None,attachments=None):
+                    statusID=None,username_origin=None,attachments=None,is_touch_in=False):
         '''
         to store full information, we did extract the keywords, 
         now we just save the full status to keep all useful information
@@ -244,7 +242,8 @@ class SNS(Screen):
         for status in self.statusList:
             if statusID == status['status_ID']:
                 index = self.statusList.index(status)
-                status['frequency'] += 1
+                if is_touch_in:
+                    status['frequency'] += 1
                 statusInList = True
         
         if not statusInList:
@@ -253,7 +252,7 @@ class SNS(Screen):
                                     'status_username':status_username,
                                     'user_name_origin':username_origin,
                                     'status_time':status_time,
-                                    'frequency' : 1,
+                                    'frequency' : 0,
                                     'time' : 0,
                                     'like' :None,
                                     'currentTime' :time.strftime("%a, %d %b %Y %H:%M:%S"),
@@ -373,6 +372,7 @@ class SNS(Screen):
         #record the shown on screen time
         #for i in range(int(head_status),int(tail_status+1)):
             #self.statusList[i]['show_on_screen_time'] += self.SHOW_ON_SCREEN_FREQUENCE
+        #Logger.debug('The shown status is ' + str(head_status) + ' to ' + str(tail_status))
         
         return (head_status,tail_status)
     
@@ -671,7 +671,7 @@ class SNSApp(App):
         ID = self.sns.snsdata[snsindex]['ID']
         attachments = self.sns.snsdata[snsindex]['attachments']
 
-        indexInStatusList = self.sns.getKeywords(content,name,statustime,ID,username_origin,attachments)
+        indexInStatusList = self.sns.getKeywords(content,name,statustime,ID,username_origin,attachments,True)
         
         new_content_popup = MSSPopup(sns_index=snsindex)
         Logger.debug('New popup build')

@@ -65,7 +65,7 @@ class MSSPopup(Popup):
                 try: index = att['format'].index('link')
                 except: index = None
                 if index != None:
-                    att_image = AsyncImage(source=att['data'])
+                    att_image = AsyncImage(source=att['data'],halign='top',valign='left')
                     attachment_layout.add_widget(att_image)
                 
         #---------------------------------------------------------------------#

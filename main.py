@@ -169,10 +169,17 @@ class SNS(Screen):
         
         try:origin_name = status.parsed.username_origin
         except:origin_name = None
-        self.getKeywords(content_text,data.username,data.time,status.ID,origin_name)
+		
+        #---------------Finding attachment and handling----------------------#
+
+        try: attachs = data.attachments
+        except: attachs = None
         
+        self.getKeywords(content_text,data.username,data.time,status.ID,origin_name,attachs,False)
         content_text = DividingUnicode.div(content_text,30)
         
+        #-------------------status inserted to the snsdata------------------------#
+                               
         self.snsdata.append({'title':title_text, 
                              'content':content_text, 
                              'name':data.username,
@@ -182,9 +189,23 @@ class SNS(Screen):
 							 
         #scroll view operation
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
+        
+        #---------------------Add the attachment to the itemview----------------------# 
+        itemlayout = newItem.ids.attachment_layout_item
+         
+        for att in attachs:
+            if att['type'] == 'picture':
+                try: index = att['format'].index('link')
+                except: index = None
+                if index != None:
+                    att_image = AsyncImage(source=att['data'],halign='top',valign='left')
+                    itemlayout.add_widget(att_image)
+                
+        #---------------------------------------------------------------------#
         self.statusGridLayout.add_widget(newItem)
 
-    def getKeywords(self,status_content,status_username=None,status_time=None,statusID=None,username_origin=None,is_touch_in=False):
+    def getKeywords(self,status_content,status_username=None,status_time=None,statusID=None,username_origin=None,attachments=None,is_touch_in=False):
+
         '''
         to store full information, we did extract the keywords, 
         now we just save the full status to keep all useful information
@@ -234,6 +255,7 @@ class SNS(Screen):
                                     'currentTime' :time.strftime("%a, %d %b %Y %H:%M:%S"),
                                     'show_on_screen_time':0,
                                     'speed_of_on_Screen':0
+                                    'attachments_contain':attachments
                                     })
             index = len(self.statusList)-1
         #------------------------------------------------------#
@@ -645,7 +667,7 @@ class SNSApp(App):
         statustime = self.sns.snsdata[snsindex]['time']
         username_origin = self.sns.snsdata[snsindex]['origin_name']
         ID = self.sns.snsdata[snsindex]['ID']
-        indexInStatusList = self.sns.getKeywords(content,name,utc2str(statustime),ID,username_origin,True)
+        indexInStatusList = self.sns.getKeywords(content,name,utc2str(statustime),ID,username_origin,attachments,True)
         
         new_content_popup = MSSPopup(sns_index=snsindex)
         Logger.debug('New popup build')
@@ -654,7 +676,12 @@ class SNSApp(App):
                                        self.sns.snsdata[snsindex]['title'], 
                                        content,
                                        indexInStatusList,
-                                       startTime)
+                                       startTime,
+                                       attachments)
+        Logger.debug('adding the attachments to the popup')
+        
+        new_content_popup.add_attachments()
+        
         Logger.debug('StatusMSSPopup has index ' + str(new_content_popup.sns_index))
         
         new_content_popup.open()

@@ -21,7 +21,7 @@
 			font_name:"fonts/DroidSansFallback.ttf"
 			bold: True
 			size_hint_y: .2
-			size_hint_x:1
+			size_hint_x: 1
 			on_release: app.click_sns(root.sns_index)
 
 	
@@ -44,6 +44,12 @@
 				size_hint_x:1
 				#on_ref_press:app.show_status(root.sns_index)
 				mipmap:True
+				
+			GridLayout:
+				rows:1
+				halign:'left'
+				id:attachment_layout_item
+				
 			#Image:
 				#source: 'data/like.png'
 				#size_hint_x:0.05
