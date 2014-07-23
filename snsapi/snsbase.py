@@ -10,7 +10,7 @@ It provides common authenticate and communicate methods.
 # === system imports ===
 import webbrowser
 from utils import json
-import requests
+
 from errors import snserror
 import urllib
 import urllib2
@@ -414,46 +414,45 @@ class SNSBase(object):
         self.jsonconf.app_key = app_key
         self.jsonconf.app_secret = app_secret
 
-    def _http_get(self, baseurl, params={}, headers=None, json_parse=True):
+    def _http_get(self, baseurl, params):
         '''Use HTTP GET to request a JSON interface
 
         :param baseurl: Base URL before parameters
 
         :param params: a dict of params (can be unicode)
 
-        :param headers: a dict of params (can be unicode)
-
-        :param json_parse: whether to parse json (default True)
-
-        :return:
-
-           * Success: If json_parse is True, a dict of json structure
-             is returned. Otherwise, the response of requests library
-             is returned.
-           * Failure: A warning is logged.
-             If json_parse is True, {} is returned.
-             Otherwise, the response of requests library is returned.
-             (can be None)
+        :return: 
+        
+           * Success: A JSON compatible structure
+           * Failure: A {}. Warning is logged. 
         '''
-        # Support unicode parameters.
+        # Support unicode parameters. 
         # We should encode them as exchanging stream (e.g. utf-8)
-        # before URL encoding and issue HTTP requests.
-        r= None
+
+
+        # before URL encoding and issue HTTP requests. 
         try:
             for p in params:
                 params[p] = self._unicode_encode(params[p])
-            r = requests.get(baseurl, params=params, headers=headers)
-            if json_parse:
-                return r.json()
-            else:
-                return r
+
+
+
+
+
+            uri = urllib.urlencode(params)
+            url = baseurl + "?" + uri
+            resp = urllib.urlopen(url)
+            json_objs = json.loads(resp.read())
+            return json_objs
         except Exception, e:
-            # Tolerate communication fault, like network failure.
+            # Tolerate communication fault, like network failure. 
             logger.warning("_http_get fail: %s", e)
-            if json_parse:
-                return {}
-            else:
-                return r
+
+
+
+
+
+            return {}
 
     def _http_post(self, baseurl, params={}, headers=None, files=None, json_parse=True):
         '''Use HTTP POST to request a JSON interface.
@@ -462,21 +461,25 @@ class SNSBase(object):
 
         :param files {'name_in_form': (filename, data/file/)}
         '''
-        r = None
         try:
             for p in params:
                 params[p] = self._unicode_encode(params[p])
-            r = requests.post(baseurl, data=params, headers=headers, files=files)
-            if json_parse:
-                return r.json()
-            else:
-                return r
+
+
+
+
+
+            data = urllib.urlencode(params)
+            resp = urllib.urlopen(baseurl,data)
+            json_objs = json.loads(resp.read())
+            return json_objs
         except Exception, e:
             logger.warning("_http_post fail: %s", e)
-            if json_parse:
-                return {}
-            else:
-                return r
+
+
+
+
+            return {}
 
     def _unicode_encode(self, s):
         """

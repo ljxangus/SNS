@@ -7,13 +7,13 @@ title = SNSApp
 package.name = snsapp
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.demo
+package.domain = org.mobitec
 
 # (str) Source code where the main.py live
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas
+source.include_exts = py,png,jpg,kv,atlas,ttf
 
 # (list) Source files to exclude (let empty to not excluding anything)
 #source.exclude_exts = spec
@@ -26,10 +26,10 @@ version.filename = %(source.dir)s/main.py
 # version = 1.2.0
 
 # (list) Application requirements
-requirements = kivy,docutils
+requirements = kivy,docutils,sqlite3,httplib2
 
 # (str) Presplash of the application
-presplash.filename = %(source.dir)s/data/icon.png
+presplash.filename = %(source.dir)s/data/back.png
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/data/icon.png
@@ -46,10 +46,10 @@ fullscreen = 1
 #
 
 # (list) Permissions
-#android.permissions = INTERNET
+android.permissions = INTERNET
 
 # (int) Android API to use
-#android.api = 14
+# android.api = 14
 
 # (int) Minimum API required (8 = Android 2.2 devices)
 #android.minapi = 8
@@ -58,7 +58,7 @@ fullscreen = 1
 #android.sdk = 21
 
 # (str) Android NDK version to use
-#android.ndk = 8c
+# android.ndk = 8c
 
 # (str) Android NDK directory (if empty, it will be automatically downloaded.)
 #android.ndk_path =
@@ -77,7 +77,7 @@ fullscreen = 1
 
 # (str) python-for-android branch to use, if not master, useful to try
 # not yet merged features.
-#android.branch = master
+android.branch = master
 
 # (str) OUYA Console category. Should be one of GAME or APP
 # If you leave this blank, OUYA support will not be enabled
@@ -104,4 +104,4 @@ fullscreen = 1
 [buildozer]
 
 # (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
-log_level = 1
+log_level = 2

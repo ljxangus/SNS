@@ -1,5 +1,4 @@
 #-*- coding:utf-8 -*-
-
 '''
 This is the app for the SNSDroid Application
 
@@ -201,8 +200,13 @@ class SNS(Screen):
                 try: index = att['format'].index('link')
                 except: index = None
                 if index != None:
-                    att_image = AsyncImage(source=att['data'],halign='top',valign='left')
-                    itemlayout.add_widget(att_image)
+                    if att['data'].find('.gif') == -1:
+                        att_image = AsyncImage(source=att['data'],size_hint_y=.2)
+                        itemlayout.add_widget(att_image)
+                        # break if only one image need add to the home time view
+                        break
+            elif att['type'] == 'link':
+                Logger.info(att['data'])
                 
         #---------------------------------------------------------------------#
         self.statusGridLayout.add_widget(newItem)
@@ -656,7 +660,6 @@ class SNSApp(App):
         sp.auth()
         
     def click_sns(self, snsindex):
-        print snsindex
         new_sns_popup = SNSPopup()
         new_sns_popup.change_index(snsindex)
         Logger.debug('popup has index ' + str(new_sns_popup.sns_index))

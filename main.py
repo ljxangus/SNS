@@ -9,7 +9,7 @@ ignoring the time and the conversion of timezone
 
 '''
 
-__version__ = '1.4'
+__version__ = '1.5'
 
 import json
 import time
@@ -38,6 +38,7 @@ from kivy.uix.listview import ListView
 from kivy.adapters.listadapter import ListAdapter
 from kivy.factory import Factory
 from kivy.core.window import Window
+from kivy.uix.image import AsyncImage, Image
 
 from snsapi.snspocket import SNSPocket
 from snsapi.utils import utc2str
@@ -136,6 +137,7 @@ class SNS(Screen):
             
         #binding test
         #self.StatusListview.bind(scroll_y=self.my_y_callback)
+        Logger.debug ('The device window size is ' + str(Window.size))
         #for status in self.statusList:
          #   print status['status_content']
 
@@ -185,8 +187,8 @@ class SNS(Screen):
                              'name':data.username,
                              'time':data.time,
                              'ID':status.ID,
-                             'origin_name':origin_name})
-							 
+                             'origin_name':origin_name,
+                             'attachments':attachs})
         #scroll view operation
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
         
@@ -198,9 +200,13 @@ class SNS(Screen):
                 try: index = att['format'].index('link')
                 except: index = None
                 if index != None:
-                    att_image = AsyncImage(source=att['data'],halign='top',valign='left')
-                    itemlayout.add_widget(att_image)
-                
+                    if att['data'].find('.gif') == -1:
+                        att_image = AsyncImage(source=att['data'],size_hint_y=.2)
+                        itemlayout.add_widget(att_image)
+                        # break if only one image need add to the home time view
+                        break
+            elif att['type'] == 'link':
+                Logger.info(att['data'])
         #---------------------------------------------------------------------#
         self.statusGridLayout.add_widget(newItem)
 
@@ -254,7 +260,7 @@ class SNS(Screen):
                                     'like' :None,
                                     'currentTime' :time.strftime("%a, %d %b %Y %H:%M:%S"),
                                     'show_on_screen_time':0,
-                                    'speed_of_on_Screen':0
+                                    'speed_of_on_Screen':0,
                                     'attachments_contain':attachments
                                     })
             index = len(self.statusList)-1
@@ -371,10 +377,10 @@ class SNS(Screen):
         tail_status = head_status + status_per_screen - 4 
         
         #record the shown on screen time
-        for i in range(int(head_status),int(tail_status+1)):
-            self.statusList[i]['show_on_screen_time'] += self.SHOW_ON_SCREEN_FREQUENCE
+        #for i in range(int(head_status),int(tail_status+1)):
+            #self.statusList[i]['show_on_screen_time'] += self.SHOW_ON_SCREEN_FREQUENCE
         
-        Logger.debug('The shown status is ' + str(head_status) + ' to ' + str(tail_status))
+        #Logger.debug('The shown status is ' + str(head_status) + ' to ' + str(tail_status))
         
         return (head_status,tail_status)
     
@@ -667,6 +673,7 @@ class SNSApp(App):
         statustime = self.sns.snsdata[snsindex]['time']
         username_origin = self.sns.snsdata[snsindex]['origin_name']
         ID = self.sns.snsdata[snsindex]['ID']
+        attachments = self.sns.snsdata[snsindex]['attachments']
         indexInStatusList = self.sns.getKeywords(content,name,utc2str(statustime),ID,username_origin,attachments,True)
         
         new_content_popup = MSSPopup(sns_index=snsindex)

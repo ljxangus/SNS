@@ -9,7 +9,7 @@ except ImportError:
 
 from snsconf import SNSConf
 from snslog import SNSLog as logger
-import multiprocessing
+#import multiprocessing
 
 '''
 utilities for snsapi
@@ -291,6 +291,7 @@ def _test_report_time(i):
 class TimeoutException(Exception):
     pass
 
+'''
 class RunnableProcess(multiprocessing.Process):
     def __init__(self, func, *args, **kwargs):
         self.queue = multiprocessing.Queue(maxsize=1)
@@ -327,7 +328,7 @@ def timeout(secs):
                 raise res
         return _func
     return wrapper
-
+'''
 
 if __name__ == '__main__':
     u = time.time()

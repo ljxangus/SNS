@@ -1,6 +1,7 @@
 #-*- coding:utf-8 -*-
+
 <SNSListItem>:
-	height: '150sp'
+	height: '170dp'
 	size_hint_y: None
 	canvas:
         Color:
@@ -21,7 +22,7 @@
 			font_name:"fonts/DroidSansFallback.ttf"
 			bold: True
 			size_hint_y: .2
-			size_hint_x:1
+			size_hint_x: 1
 			on_release: app.click_sns(root.sns_index)
 
 	
@@ -38,18 +39,15 @@
 				text_size: self.size
 				valign:'top'
 				halign:'left'
-				font_size:'11dp'
+				font_size:'10dp'
 				font_name:"fonts/DroidSansFallback.ttf"
-				#markup:True
 				size_hint_x:1
-				#on_ref_press:app.show_status(root.sns_index)
-				mipmap:True
-			#Image:
-				#source: 'data/like.png'
-				#size_hint_x:0.05
-				#width: 10
-				#height: self.width
-				#mipmap:True
+				size_hint_y:.6
+				
+			GridLayout:
+				rows:1
+				halign:'left'
+				id:attachment_layout_item
 
 			
 <SNS>:
