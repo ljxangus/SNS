@@ -47,24 +47,16 @@
 				rows:1
 				halign:'left'
 				id:attachment_layout_item
-				
-			#Image:
-				#source: 'data/like.png'
-				#size_hint_x:0.05
-				#width: 10
-				#height: self.width
-				#mipmap:True
-
 			
 <SNS>:
 	GridLayout:
 		cols:1
 		BoxLayout:
-
+			
 			orientation: 'horizontal'
 			size_hint_y: None
-			height: '48dp'
-			padding: '1dp'
+			height: 48
+			#padding: '1dp'
 
 			canvas:
 				Color:
@@ -80,6 +72,7 @@
 				width: self.height
 
 			Label:
+				id:_sns_reader_label
 				text: 'SNS Reader'
 				font_size: '16sp'
 				bold:True
@@ -122,7 +115,7 @@
 		AnchorLayout:
 			anchor_x: 'center'
 			anchor_y: 'bottom'
-			size_hint_y:.1
+			size_hint_y: .03
 			
 			BoxLayout:				
 				StatusBar:

@@ -617,7 +617,7 @@ class SNSApp(App):
         #self.sns.add_widget(new_list_view)
         
     def refresh_channel(self):
-        self.sns.refresh_status()
+        #self.sns.refresh_status()
         channeldata = self.sns.channeldata
         self.sns.channeldata = []
         self.sns.channeldata = channeldata

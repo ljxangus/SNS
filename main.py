@@ -3,22 +3,23 @@
 '''
 This is the app for the SNSDroid Application
 
-Windows version
-
-ignoring the time and the conversion of timezone
+created by Jonathan
 
 '''
 
-__version__ = '1.5'
+__version__ = '1.6'
 
 import json
 import time
 import kivy
-from kivy.logger import Logger
+import sys
+import shelve
+# from kivy.logger import Logger
 from kivy.config import Config
 import kivy.resources
 import kivy.clock
 import webbrowser
+import os
 
 from os.path import join, exists
 from kivy.app import App
@@ -47,6 +48,7 @@ from sns import SNSView, SNSListItem, SNSPopup, UpdateStatus, ForwardStatus, Rep
 from channel import ChannelListItem, Channel,  ChannelView
 from accessories import SaveConfigBubble,  PickPlatformView,  StatusBar,  GeneralOptions, DropDownMenu, AboutPopup, HelpPopup
 from extract_keywords import extractKeywords
+from appLog import SNSAPPLog as Logger
 
 kivy.require('1.8.0')
 Config.set('graphics', 'width', '640')
@@ -66,6 +68,19 @@ TENCENT_WEIBO = 'TencentWeiboStatus'
 TWITTER = 'TwitterStatus'
 
 APP = 'SNSReader'
+running_platform = ''
+
+'''
+OS System and its 'code'
+Linux (2.x and 3.x)    'linux2'
+Windows    'win32'
+Windows/Cygwin    'cygwin'
+Mac OS X    'darwin'
+OS/2    'os2'
+OS/2 EMX    'os2emx'
+RiscOS    'riscos'
+AtheOS    'atheos'
+'''
 
 class MutableTextInput(FloatLayout):
 
@@ -117,10 +132,14 @@ class SNS(Screen):
         self.ch.sort()
         self.ch.insert(0, 'All Platform')
         self.STATUS_SIZE = 20
-        self.SHOW_ON_SCREEN_FREQUENCE = 1
+        self.SHOW_ON_SCREEN_FREQUENCE = 2
         self.moreClickTimes = 0
         self.first_status = None
         self.ids._channel_spinner.values = self.ch
+        
+        self.formmer_head_status = 0
+        self.formmer_tail_status = 0
+        
         self.dropdownmenu = DropDownMenu()
         
         self.statusGridLayout = GridLayout(cols=1, padding=5,size_hint=(1, None))
@@ -130,14 +149,19 @@ class SNS(Screen):
         
         self.StatusListview.add_widget(self.statusGridLayout)
         
+        '''
+        # status.json
+        
         if exists('conf/status.json'):
             with open('conf/status.json','rb') as fd:
                 statusdata = json.load(fd)
             self.statusList = statusdata
+        '''
             
         #binding test
         #self.StatusListview.bind(scroll_y=self.my_y_callback)
-        Logger.debug ('The device window size is ' + str(Window.size))
+        Logger.system_info('The device window size is ' + str(Window.size),'[No Action]')
+        Logger.device_behaviour('The device window size is ' + str(Window.size),'[No Action]')
         #for status in self.statusList:
          #   print status['status_content']
 
@@ -146,8 +170,8 @@ class SNS(Screen):
         if not channel or channel == self.current_channel: return
         self.current_channel = channel != 'All Platform' and channel or None
         self.current_channel_intext = channel != 'All Platform' and channel or 'All Platform'
-        Logger.debug('self.current_channel_intext is ' + str(self.current_channel_intext))
-        Logger.debug('self.current_channel is ' + str(self.current_channel))
+        Logger.system_info('self.current_channel_intext is ' + str(self.current_channel_intext))
+        Logger.system_info('self.current_channel is ' + str(self.current_channel))
 
         return True
         
@@ -165,19 +189,29 @@ class SNS(Screen):
         data = status.parsed
         try: text = data.title
         except: text = data.text
-        #title_text = '%s said at %s,' % (data.username, data.time)
-        title_text = '%s at %s' % (data.username, utc2str(data.time))
+        
+        global running_platform
+        if running_platform == 'win32':
+            title_text = '%s said at %s,' % (data.username, data.time)
+        else:
+            title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
         
         try:origin_name = status.parsed.username_origin
         except:origin_name = None
+        
+        digest_info = status.digest()
 		
         #---------------Finding attachment and handling----------------------#
 
         try: attachs = data.attachments
         except: attachs = None
         
+        '''
+        #status.json
         self.getKeywords(content_text,data.username,data.time,status.ID,origin_name,attachs,False)
+        '''
+            
         content_text = DividingUnicode.div(content_text,30)
         
         #-------------------status inserted to the snsdata------------------------#
@@ -188,7 +222,8 @@ class SNS(Screen):
                              'time':data.time,
                              'ID':status.ID,
                              'origin_name':origin_name,
-                             'attachments':attachs})
+                             'attachments':attachs,
+                             'digest_info':digest_info})
         #scroll view operation
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
         
@@ -206,8 +241,10 @@ class SNS(Screen):
                         # break if only one image need add to the home time view
                         break
             elif att['type'] == 'link':
-                Logger.info(att['data'])
-        #---------------------------------------------------------------------#
+                Logger.system_info (str(att['data']))
+        #----------------------Save the duplicated status to database----------------#
+        self.save_depulicated_status(status)
+        
         self.statusGridLayout.add_widget(newItem)
 
     def getKeywords(self,status_content,status_username=None,status_time=None,statusID=None,username_origin=None,attachments=None,is_touch_in=False):
@@ -301,24 +338,25 @@ class SNS(Screen):
         
         if len(hl)>0:
             self.first_status = hl[0]
-            Logger.debug('first status inserted')
+            Logger.system_info('No status','First status inserted')
         for s in hl:
             if self.insert_status(s, i):
                 i += 1
         
-        Logger.debug("length of sns data " +str (len(self.snsdata)))        
+        Logger.system_info("Length of sns data " +str (len(self.snsdata)))        
         
         self.StatusListview.scroll_y = 1
-        
+        self.formmer_head_status=0
+        self.formmer_tail_status=0
         #schedule the clock
         Clock.schedule_interval(self.status_shown_on_screen, self.SHOW_ON_SCREEN_FREQUENCE)
         return True
         
     def more_status(self):
-        Logger.debug('The length of the sp is ' + str(len(sp)))
+        Logger.system_info('The length of the sp is ' + str(len(sp)))
         self.moreClickTimes = self.moreClickTimes + 1
         n  = len(self.all_status) + len(sp) * 10 * self.moreClickTimes
-        Logger.debug('The number n is ' + str(n))
+        Logger.system_info('The number n is ' + str(n))
         more_home_timeline = sp.home_timeline(n,self.current_channel)
         first_in_more = len(more_home_timeline)
         
@@ -342,7 +380,7 @@ class SNS(Screen):
         for i in range(len(more_home_timeline)):
             if more_home_timeline[i].parsed.text==self.first_status.parsed.text:
                 first_in_more = i
-                Logger.debug('first status in more status ' + str(i))
+                Logger.system_info('No status','First status in more status ' + str(i))
                 break
         
         
@@ -354,55 +392,116 @@ class SNS(Screen):
                     j+=1
             i += 1
         
-        Logger.debug("length of sns data "+ str(len(self.snsdata)))
+        Logger.system_info("Length of sns data "+ str(len(self.snsdata)))
             
         self.StatusListview.scroll_y = 1
+        
+        self.formmer_head_status=0
+        self.formmer_tail_status=0
+        
         return True
     
     def my_y_callback(self,obj, value):
 
-        Logger.debug('on listview', obj, 'scroll y changed to', value)
-        Logger.debug('The status on the screen is ', self.status_shown_on_screen(obj, value))
+        Logger.system_info('No status','On listview'+ str(obj) + 'scroll y changed to' + str(value))
+        Logger.system_info('The status on the screen is '+ str(self.status_shown_on_screen(obj, value)))
     
-    def scroll_speed(self):
-        pass
-    
-    def status_shown_on_screen(self,obj=None, scroll_y=None):
+    def status_shown_on_screen(self,obj=None, scroll_y=None):        
         if scroll_y == None:
             scroll_y = self.StatusListview.scroll_y
-            
-        head_status = round((1-scroll_y)*(len(self.snsdata)-2.8))
+        '''    
+        head_status = int(round((1-scroll_y)*(len(self.snsdata)-2.8)))
         status_list_height = Window.size[1] - 90
-        status_per_screen = round(status_list_height / 150)
-        tail_status = head_status + status_per_screen - 4 
+        status_per_screen = int(round(status_list_height / 150))
+        tail_status = head_status + status_per_screen - 1
+        '''
+        status_list_height = self.StatusListview.height
+        statusNum_per_screen = status_list_height/150
+        per_status_height_percentage = 150/(150*len(self.snsdata)-self.StatusListview.height)
+        head_status = round((1-scroll_y)/per_status_height_percentage)
+        tail_status = round(head_status + statusNum_per_screen - 1)
+        
+        head_status = int(head_status)
+        tail_status = int(tail_status)
         
         #record the shown on screen time
-        #for i in range(int(head_status),int(tail_status+1)):
-            #self.statusList[i]['show_on_screen_time'] += self.SHOW_ON_SCREEN_FREQUENCE
+        if tail_status <= 0:
+            temp_tail_status = 0
+        elif tail_status >= len(self.snsdata):
+            temp_tail_status = len(self.snsdata) - 1
+        else:
+            temp_tail_status = tail_status
         
-        #Logger.debug('The shown status is ' + str(head_status) + ' to ' + str(tail_status))
+        tail_status = temp_tail_status
+            
+        #for i in range(int(head_status),temp_tail_status):
+            #self.statusList[i]['show_on_screen_time'] += self.SHOW_ON_SCREEN_FREQUENCE
+        '''
+        TODO: Calculate the status enter-top, enter-bottom, leave-top, leave-bottom 
+        '''
+        enter_top = None
+        enter_bottom = None
+        leave_top = None
+        leave_bottom = None
+        
+        if head_status < self.formmer_head_status:
+            enter_top = head_status
+            leave_bottom = self.formmer_tail_status
+            Logger.status_user(self.snsdata[enter_top]['digest_info'],'Enter top status')
+            Logger.status_user(self.snsdata[leave_bottom]['digest_info'],'Leave bottom status')
+            self.formmer_head_status = head_status
+            self.formmer_tail_status = tail_status
+        elif head_status > self.formmer_head_status:
+            leave_top = self.formmer_head_status
+            enter_bottom = tail_status
+            Logger.status_user(self.snsdata[leave_top]['digest_info'],'Leave top status')
+            Logger.status_user(self.snsdata[enter_bottom]['digest_info'],'Enter bottom status')
+            self.formmer_head_status = head_status
+            self.formmer_tail_status = tail_status
+        else:
+            self.formmer_head_status = head_status
+            self.formmer_tail_status = tail_status
+        
+        print('The shown status is ' + str(head_status) + ' to ' + str(tail_status))
         
         return (head_status,tail_status)
     
     def save_status_feedback(self,obj=None, value=None):
         with open('conf/status.json', 'wb') as fd:
             json.dump(self.statusList, fd,indent = 2)
+            
+    def save_depulicated_status(self,status):
+        s = shelve.open('applog/status_hash.bat')
+        flag = s.has_key(status.digest())
+        
+        checked_status = {'ID':status.ID,
+                          'raw':status.raw,
+                          'platform':status.platform}
+        if flag == True:
+            s.close()
+            return
+        else:
+            s[status.digest()] = checked_status
+        
+        s.close()
+        return
         
 class SNSApp(App):
     
     def build(self):
-        
+        global running_platform
         #load kv file
         Builder.load_file('layout/sns.kv')
         Builder.load_file('layout/sns_popup.kv')
         Builder.load_file('layout/channel_view.kv')
-        Builder.load_file('layout/scrollLayoutView_android.kv')
         Builder.load_file('layout/channel_list_layout.kv')
         Builder.load_file('layout/post_status.kv')
+        if running_platform == 'win32':
+            Builder.load_file('layout/scrollLayoutView.kv')
+        else:
+            Builder.load_file('layout/scrollLayoutView_android.kv')
         
         self.sns = SNS(name='sns')
-        #self.channel = Channel(name='channel')
-        #self.sns.snsdata.append({'content':"Hi", 'title':'Testing1'})
         
         self.load_channel()
         self.transition = SlideTransition(duration=.35)
@@ -421,24 +520,31 @@ class SNSApp(App):
         '''
         
         self.choose_status_index = 0
-        Clock.schedule_interval(self.sns.save_status_feedback,5)
+        
+        # status.json
+        #Clock.schedule_interval(self.sns.save_status_feedback,5)
         
         time.clock()
 
         #for s in sp.home_timeline(10):
             #self.sns.insert_status(s)
-        
+        Logger.system_info('No status','APP build')
         return root
         
     def on_stop(self):
-        self.sns.save_status_feedback()
+        #self.sns.save_status_feedback()
         self.save_channel()
         self.save_config()
+        Logger.system_info('No status','APP on_stop()')
+        Logger.device_stop()
         
     def on_pause(self):
+        Logger.system_info('No status','APP on_stop()')
+        Logger.device_pause()
         return True
     
     def on_resume(self):
+        Logger.system_info('No status','APP on_resume()')
         pass
 
     def load_channel(self):
@@ -516,7 +622,7 @@ class SNSApp(App):
         if temp_channel_platform in ('RenrenBlog', 'RenrenShare', 'RenrenStatus', 'SinaWeiboStatus', 'TencentWeiboStatus', ) :
             temp_channel['auth_info']['callback_url'] = channel.get('callback_url')
          
-        Logger.debug(temp_channel)
+        Logger.system_info('No status','Temp channel added' + str(temp_channel) )
          
         self.save_channel()
         sp.auth()
@@ -542,12 +648,12 @@ class SNSApp(App):
          
             if temp_channel_platform in ('RSS', ):
                 SNSChannel['url'] = channel.get('url')
-                Logger.debug('channel get url is: ' + channel.get('url'))
+                Logger.system_info('No status','Channel get url is: ' + channel.get('url'))
 
             if temp_channel_platform in ('RenrenBlog', 'RenrenShare', 'RenrenStatus', 'SinaWeiboStatus', 'TencentWeiboStatus', ) :
                 SNSChannel['auth_info']['callback_url'] = channel.get('callback_url')
         
-            Logger.debug(SNSChannel)
+            #Logger.debug(SNSChannel)
 
             sp.add_channel(SNSChannel)
             sp.auth(SNSChannel['channel_name'])
@@ -618,7 +724,7 @@ class SNSApp(App):
         #self.sns.add_widget(new_list_view)
         
     def refresh_channel(self):
-        self.sns.refresh_status()
+        #self.sns.refresh_status()
         channeldata = self.sns.channeldata
         self.sns.channeldata = []
         self.sns.channeldata = channeldata
@@ -663,7 +769,9 @@ class SNSApp(App):
     def click_sns(self, snsindex):
         new_sns_popup = SNSPopup()
         new_sns_popup.change_index(snsindex)
-        Logger.debug('popup has index ' + str(new_sns_popup.sns_index))
+        Logger.system_info('Popup has index ' + str(new_sns_popup.sns_index),'Popup shown')
+        
+        Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'Status clicked by user')
         new_sns_popup.open()
         
     def show_status(self, snsindex):
@@ -674,60 +782,85 @@ class SNSApp(App):
         username_origin = self.sns.snsdata[snsindex]['origin_name']
         ID = self.sns.snsdata[snsindex]['ID']
         attachments = self.sns.snsdata[snsindex]['attachments']
-        indexInStatusList = self.sns.getKeywords(content,name,utc2str(statustime),ID,username_origin,attachments,True)
+        digest_info = self.sns.snsdata[snsindex]['digest_info']
         
+        Logger.status_user(digest_info,'Details of this status shown')
+        
+        '''
+        #status.json
+        global running_platform
+        if running_platform == 'win32':
+            indexInStatusList = self.sns.getKeywords(content,name,statustime,ID,username_origin,attachments,True)
+        else:
+            indexInStatusList = self.sns.getKeywords(content,name,utc2str(statustime),ID,username_origin,attachments,True)
+        '''
         new_content_popup = MSSPopup(sns_index=snsindex)
-        Logger.debug('New popup build')
+        Logger.system_info('No status','New popup build')
         startTime = time.clock()
         new_content_popup.change_index(snsindex, 
                                        self.sns.snsdata[snsindex]['title'], 
                                        content,
-                                       indexInStatusList,
+                                       snsindex,
                                        startTime,
                                        attachments)
-        Logger.debug('adding the attachments to the popup')
+        Logger.system_info('No status','Adding the attachments to the popup')
         
         new_content_popup.add_attachments()
         
-        Logger.debug('StatusMSSPopup has index ' + str(new_content_popup.sns_index))
+        Logger.system_info('StatusMSSPopup has index ' + str(new_content_popup.sns_index),'MSSPopup Added')
+        Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'Status details popup shwon')
         
         new_content_popup.open()
         
         #print self.sns.snsdata[new_content_popup.sns_index]['content']
     
     def close_status(self, snsindex, starttime, like):
+        '''
         self.sns.statusList[snsindex]['time'] += (time.clock()-starttime)
         self.sns.statusList[snsindex]['like'] = like
         
         with open('conf/status.json', 'wb') as fd:
             json.dump(self.sns.statusList, fd,indent = 2)
+        '''
+        if like==True:
+            Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'User like the status')
+        elif like==False:
+            Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'User dislike the status')
+        else:
+            Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'User do not care the status')
+        
+        Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'Status detail popup closed')
         
     def forward_status(self, message, text):
-        Logger.debug('forward_status to ' + self.sns.current_channel_intext)
+        Logger.status_user('No status','Forward_status to ' + self.sns.current_channel_intext)
+        Logger.status_user(text,'Forward status comment')
         sp.forward(message, text, self.sns.current_channel)
         
     def reply_status(self, message, text):
-        Logger.debug('reply_status to ' + message.ID.channel)
+        Logger.status_user('No status','Reply_status to ' + message.ID.channel)
+        Logger.status_user(text,'Reply status comment')
         sp.reply(message, text)
         
     def update_status(self, post_content):
-        Logger.debug('update_status to ' + self.sns.current_channel_intext)
-        Logger.debug(post_content)
+        Logger.status_user('No status','Update_status to ' + self.sns.current_channel_intext)
+        Logger.status_user(post_content,'Updated status content')
+        
         if sp.update(post_content, self.sns.current_channel):
             return True
         else:
             return False
         
-    def go_update_status(self):
+    def go_update_status(self, sns_index):
         name = 'update_status'
         if self.root.has_screen(name):
             self.root.remove_widget(self.root.get_screen(name))
-        view = UpdateStatus(
-            name = name)
+        view = UpdateStatus(name = name)
 
         self.root.add_widget(view)
         self.transition.direction = 'left'
         self.root.current = view.name
+        
+        Logger.status_user(self.sns.snsdata[sns_index]['digest_info'],'Update a status')
         
     def go_forward_status(self, sns_index):
         name = 'forward_status'
@@ -743,6 +876,8 @@ class SNSApp(App):
         self.transition.direction = 'left'
         self.root.current = view.name
         
+        Logger.status_user(self.sns.snsdata[sns_index]['digest_info'],'Forward the status')
+        
     def go_reply_status(self, sns_index):
         name = 'reply_status'
         if self.root.has_screen(name):
@@ -756,10 +891,14 @@ class SNSApp(App):
         self.root.add_widget(view)
         self.transition.direction = 'left'
         self.root.current = view.name
+        
+        Logger.status_user(self.sns.snsdata[sns_index]['digest_info'],'Reply the status')
     
     def go_sns_quietly(self):
         self.transition.direction = 'right'
         self.root.current = 'sns'
+        
+        Logger.user_behaviour('No status','Go back to home timeline view')
         
     def OpenDropDownMenu(self,obj):
         self.sns.dropdownmenu.open(obj)
@@ -774,6 +913,7 @@ class SNSApp(App):
         
     def open_url(self,url):
         webbrowser.open(url)
+        
     @property
     def channel_fn(self):
         channel_fn = 'conf/sns.json'
@@ -781,6 +921,11 @@ class SNSApp(App):
         #return join(self.user_data_dir, 'sns.json')
         
 if __name__=="__main__":
+    running_platform = sys.platform
+    if not os.path.exists('applog'):
+        os.mkdir('applog')
+    Logger.device_start()
+    Logger.system_info('Running platform is: '+ running_platform)
     sp = SNSPocket()
     sp.load_config()
     sp.auth()
