@@ -93,19 +93,7 @@ class ChannelView(Screen):
         temp_platform = self.ids.w_platform.text
         if temp_platform in ('RenrenBlog', 'RenrenShare', 'RenrenStatus', 'SinaWeiboStatus', 'TencentWeiboStatus', 'TwitterStatus') :
             self.ids.w_app_secret.disabled = False
-            self.ids.w_app_key.disabled = False
-            if temp_platform in ('RenrenBlog', 'RenrenShare', 'RenrenStatus'):
-                self.ids.w_app_key.text = 'e891bb00caac4a999a13b9bee7f5c835'
-                self.ids.w_app_secret.text = '1729fea9bd784d27bd192cead2f90b45'
-            elif temp_platform == 'SinaWeiboStatus':
-                self.ids.w_app_key.text = '3102874688'
-                self.ids.w_app_secret.text = 'b47a651d1b5be0127690f017965bd343'
-            elif temp_platform == 'TencentWeiboStatus':
-                self.ids.w_app_key.text = '801389477'
-                self.ids.w_app_secret.text = 'bd002edff5670f64be610c7e143b3b18'
-            elif temp_platform == 'TwitterStatus':
-                self.ids.w_app_key.text = 'jNeenbpkNvGnGgR09AbXRQ'
-                self.ids.w_app_secret.text = 'xOl31NQFrO9mn99tvvf5wmYBjeJT2V50gJNrPNHs6c'
+            self.ids.w_app_key.disabled = False 
         else:
             self.ids.w_app_secret.disabled = True
             self.ids.w_app_key.disabled = True
@@ -114,17 +102,14 @@ class ChannelView(Screen):
         temp_platform = self.ids.w_platform.text
         if temp_platform in ('RenrenBlog', 'RenrenShare', 'RenrenStatus', 'SinaWeiboStatus', 'TencentWeiboStatus') :
             self.ids.w_callback_url.disabled = False
-            self.ids.w_callback_url.text = 'http://snsapi.sinaapp.com/auth.php'
         else:
             self.ids.w_callback_url.disabled = True
             
     def access_check(self):
         temp_platform = self.ids.w_platform.text
-        if temp_platform == 'TwitterStatus':
+        if temp_platform in ('TwitterStatus') :
             self.ids.w_access_secret.disabled = False
-            self.ids.w_access_key.disabled = False
-            self.ids.w_access_secret.text = '4fk0WmEos6bTEMuA7cjYAjGNkmLqusQAzAkrbFgq3M'
-            self.ids.w_access_key.text = '1599990409-keJcjxyibqjHkEdEeZ1LkvcIiw809I0N9HCvRRH'
+            self.ids.w_access_key.disabled = False 
         else:
             self.ids.w_access_secret.disabled = True
             self.ids.w_access_key.disabled = True
