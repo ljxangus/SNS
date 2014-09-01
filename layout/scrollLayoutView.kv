@@ -33,6 +33,7 @@
 			#padding:'2dp'
 	
 			Label:
+				id: w_sns_item_content
 				#text: root.sns_content + '\n' + '[color=ff0099][ref=world]MORE[/ref][/color]'
 				text: root.sns_content
 				text_size: self.size
@@ -41,7 +42,7 @@
 				font_size:'11dp'
 				font_name:"fonts/DroidSansFallback.ttf"
 				size_hint_x:1
-				size_hint_y:.6
+				size_hint_y: None
 				
 			GridLayout:
 				rows:1

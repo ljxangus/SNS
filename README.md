@@ -17,11 +17,3 @@ Tips: make sure that there is a file `android.txt` in the location `sdcard0/kivy
 
 ### TODO:
 We will further explore more functions and add them to the app. Also, we will do a ranking job in the future version.
-
-## Windows version released!
-
-Here is the link:
-
-[SNSAPP Windows version](https://dl.dropboxusercontent.com/u/106605049/SNSAPP.rar)
-
-Tips: Just click the SNSAPP.exe the enjoy it!

@@ -14,6 +14,9 @@ import time
 import kivy
 import sys
 import shelve
+import pickle
+import sqlite3
+import cPickle
 # from kivy.logger import Logger
 from kivy.config import Config
 import kivy.resources
@@ -51,8 +54,8 @@ from extract_keywords import extractKeywords
 from appLog import SNSAPPLog as Logger
 
 kivy.require('1.8.0')
-Config.set('graphics', 'width', '640')
-Config.set('graphics', 'height', '320')
+#Config.set('graphics', 'width', '640')
+#Config.set('graphics', 'height', '320')
 
 # supported platform
 EMAIL = 'Email'
@@ -118,6 +121,7 @@ class MutableTextInput(FloatLayout):
 
 class SNS(Screen):
     statusList = ListProperty()
+    status_duplicate_set = set()
     snsdata = ListProperty()
     channeldata = ListProperty()
     all_status = []
@@ -132,7 +136,7 @@ class SNS(Screen):
         self.ch.sort()
         self.ch.insert(0, 'All Platform')
         self.STATUS_SIZE = 20
-        self.SHOW_ON_SCREEN_FREQUENCE = 2
+        self.SHOW_ON_SCREEN_FREQUENCE = 1
         self.moreClickTimes = 0
         self.first_status = None
         self.ids._channel_spinner.values = self.ch
@@ -152,12 +156,29 @@ class SNS(Screen):
         '''
         # status.json
         
-        if exists('conf/status.json'):
-            with open('conf/status.json','rb') as fd:
+        if exists('applog/status.json'):
+            with open('applog/status.json','rb') as fd:
                 statusdata = json.load(fd)
             self.statusList = statusdata
+        '''    
+        # status sqlite3
+        self.status_sqlite3_cx = sqlite3.connect('applog/status_raw_data.db')
+        self.status_sqlite3_cu = self.status_sqlite3_cx.cursor()
+        try: 
+            self.status_sqlite3_cu.execute("""create table status_raw_data (digest TEXT UNIQUE,raw_data BLOB,status_id BLOB, show_on_screen_time INT, click_times INT, show_detail_times INT, like TEXT, currentTime TEXT)""")
+            Logger.system_info("status database","Created")
+        except sqlite3.Error,e: 
+            print 'database create error',"\n", e.args[0]
+        self.status_sqlite3_cx.commit()
+        
         '''
-            
+        try:
+            with open('applog/status_duplicated.pickle','rb') as fd:
+                self.status_duplicate_set = pickle.load(fd)
+        except:
+            self.status_duplicate_set = set()
+        '''
+        
         #binding test
         #self.StatusListview.bind(scroll_y=self.my_y_callback)
         Logger.system_info('The device window size is ' + str(Window.size),'[No Action]')
@@ -193,8 +214,10 @@ class SNS(Screen):
         global running_platform
         if running_platform == 'win32':
             title_text = '%s said at %s,' % (data.username, data.time)
-        else:
+        elif running_platform == 'linux3':
             title_text = '%s at %s' % (data.username, utc2str(data.time))
+        elif running_platform == 'darwin':
+        	title_text = '%s at %s' % (data.username, utc2str(data.time))
         content_text = text
         
         try:origin_name = status.parsed.username_origin
@@ -207,10 +230,10 @@ class SNS(Screen):
         try: attachs = data.attachments
         except: attachs = None
         
-        '''
+        
         #status.json
-        self.getKeywords(content_text,data.username,data.time,status.ID,origin_name,attachs,False)
-        '''
+        #self.getKeywords(content_text,data.username,data.time,status.ID,origin_name,attachs,False,digest_info,status.raw)
+        
             
         content_text = DividingUnicode.div(content_text,30)
         
@@ -223,11 +246,22 @@ class SNS(Screen):
                              'ID':status.ID,
                              'origin_name':origin_name,
                              'attachments':attachs,
-                             'digest_info':digest_info})
+                             'digest_info':digest_info,
+                             'raw':status.raw,
+                             'platform':status.platform,
+                             'show_on_screen_time':0,
+                             'click_times' : 0,
+                             'show_detail_times' : 0,
+                             'like' :None,
+                             'currentTime' :time.strftime("%a, %d %b %Y %H:%M:%S")})
         #scroll view operation
         newItem = SNSListItem(sns_content=content_text,sns_title=title_text,sns_index=index)
         
         #---------------------Add the attachment to the itemview----------------------# 
+        if attachs == None:
+            newItem.ids.w_sns_item_content.size_hint_y = None
+            
+        
         itemlayout = newItem.ids.attachment_layout_item
          
         for att in attachs:
@@ -237,17 +271,22 @@ class SNS(Screen):
                 if index != None:
                     if att['data'].find('.gif') == -1:
                         att_image = AsyncImage(source=att['data'],size_hint_y=.2)
+                        newItem.ids.w_sns_item_content.size_hint_y = 0.6
                         itemlayout.add_widget(att_image)
                         # break if only one image need add to the home time view
                         break
             elif att['type'] == 'link':
                 Logger.system_info (str(att['data']))
         #----------------------Save the duplicated status to database----------------#
-        self.save_depulicated_status(status)
+        if running_platform == 'win32':
+            self.save_depulicated_status_win32(status)
+        elif running_platform == 'linux3':
+            pass
         
         self.statusGridLayout.add_widget(newItem)
 
-    def getKeywords(self,status_content,status_username=None,status_time=None,statusID=None,username_origin=None,attachments=None,is_touch_in=False):
+    def getKeywords(self,status_content,status_username=None,status_time=None,statusID=None,username_origin=None,attachments=None,is_touch_in=False, \
+                    digest_info=None,raw=None):
 
         '''
         to store full information, we did extract the keywords, 
@@ -276,7 +315,7 @@ class SNS(Screen):
         '''
         #----------------------------------------------------#
         #full status version
-        
+        '''
         statusInList = False
         index = 0
         for status in self.statusList:
@@ -301,11 +340,25 @@ class SNS(Screen):
                                     'attachments_contain':attachments
                                     })
             index = len(self.statusList)-1
+        '''
+        statusInList = False
+        index = 0
+        for status in self.statusList:
+            if digest_info == status['digest_info']:
+                index = self.statusList.index(status)
+                statusInList = True
+        
+        if not statusInList:
+            self.statusList.append({'status_ID':statusID,
+                                    'digest_info':digest_info,
+                                    'raw':raw,
+                                    'show_on_screen_time':0
+                                    })
+            index = len(self.statusList)-1
         #------------------------------------------------------#
-
-        '''                        
-
-        with open('conf/status.json', 'wb') as fd:
+                         
+        '''
+        with open('applog/status.json', 'wb') as fd:
             json.dump(self.statusList, fd,indent = 2)
         '''
                 
@@ -319,6 +372,7 @@ class SNS(Screen):
             'sns_title': item['title']}
 
     def refresh_status(self):
+        self.save_status_feedback()
         Clock.unschedule(self.status_shown_on_screen)
         self.moreClickTimes = 0
         temp_length = len(self.snsdata)
@@ -348,6 +402,63 @@ class SNS(Screen):
         self.StatusListview.scroll_y = 1
         self.formmer_head_status=0
         self.formmer_tail_status=0
+        '''
+        if running_platform == 'linux3':
+            self.save_depulicated_status_android()
+            with open('applog/status_duplicated.pickle','wb') as fd:
+                pickle.dump(self.status_duplicate_set, fd)
+        
+        #status json
+        with open('applog/status.json', 'wb') as fd:
+            json.dump(self.statusList, fd,indent = 2)
+        '''
+        self.save_status_feedback()
+        #schedule the clock
+        Clock.schedule_interval(self.status_shown_on_screen, self.SHOW_ON_SCREEN_FREQUENCE)
+        return True
+    
+    def more_status_robust(self):
+        self.save_status_feedback()
+        Clock.unschedule(self.status_shown_on_screen)
+        Logger.system_info('No status','More status clicked')
+        self.moreClickTimes = self.moreClickTimes + 1
+        n  = len(self.all_status) + len(sp) * 10 * self.moreClickTimes
+        
+        del self.all_status[0:len(self.all_status)]
+        del self.snsdata[0:len(self.snsdata)]
+        self.statusGridLayout.clear_widgets()
+        
+        if self.first_status == None:
+            self.refresh_status()
+            self.moreClickTimes = self.moreClickTimes - 1
+            return False
+        
+        hl = sp.home_timeline(n, self.current_channel)
+
+        i = 0
+        
+        if len(hl)>0:
+            self.first_status = hl[0]
+        for s in hl:
+            if self.insert_status(s, i):
+                i += 1
+        
+        Logger.system_info("Length of sns data " +str (len(self.snsdata)))        
+        
+        self.StatusListview.scroll_y = 1
+        self.formmer_head_status=0
+        self.formmer_tail_status=0
+        '''
+        if running_platform == 'linux3':
+            #self.save_depulicated_status_android()
+            with open('applog/status_duplicated.pickle','wb') as fd:
+                pickle.dump(self.status_duplicate_set, fd)
+        
+        with open('applog/status.json', 'wb') as fd:
+            json.dump(self.statusList, fd,indent = 2)
+        '''
+        
+        self.save_status_feedback()
         #schedule the clock
         Clock.schedule_interval(self.status_shown_on_screen, self.SHOW_ON_SCREEN_FREQUENCE)
         return True
@@ -364,17 +475,6 @@ class SNS(Screen):
             self.refresh_status()
             self.moreClickTimes = self.moreClickTimes - 1
             return False
-
-        
-        '''
-        i = 0
-        for sta in more_home_timeline:
-            if sta == first_status:
-                first_in_more = i
-                print 'first status in more status ' + str(i)
-                break
-            i+=1
-        '''
         
         #Find the original fisrt status    
         for i in range(len(more_home_timeline)):
@@ -390,15 +490,14 @@ class SNS(Screen):
             if i >= first_in_more+self.STATUS_SIZE:
                 if self.insert_status(sta, j):
                     j+=1
-            i += 1
+            i+=1
         
         Logger.system_info("Length of sns data "+ str(len(self.snsdata)))
             
         self.StatusListview.scroll_y = 1
-        
         self.formmer_head_status=0
         self.formmer_tail_status=0
-        
+        self.save_status_feedback()
         return True
     
     def my_y_callback(self,obj, value):
@@ -447,30 +546,108 @@ class SNS(Screen):
         if head_status < self.formmer_head_status:
             enter_top = head_status
             leave_bottom = self.formmer_tail_status
-            Logger.status_user(self.snsdata[enter_top]['digest_info'],'Enter top status')
-            Logger.status_user(self.snsdata[leave_bottom]['digest_info'],'Leave bottom status')
+            #Logger.status_user(self.snsdata[enter_top]['digest_info'],'Enter top status')
+            #Logger.status_user(self.snsdata[leave_bottom]['digest_info'],'Leave bottom status')
             self.formmer_head_status = head_status
             self.formmer_tail_status = tail_status
         elif head_status > self.formmer_head_status:
             leave_top = self.formmer_head_status
             enter_bottom = tail_status
-            Logger.status_user(self.snsdata[leave_top]['digest_info'],'Leave top status')
-            Logger.status_user(self.snsdata[enter_bottom]['digest_info'],'Enter bottom status')
+            #Logger.status_user(self.snsdata[leave_top]['digest_info'],'Leave top status')
+            #Logger.status_user(self.snsdata[enter_bottom]['digest_info'],'Enter bottom status')
             self.formmer_head_status = head_status
             self.formmer_tail_status = tail_status
         else:
             self.formmer_head_status = head_status
             self.formmer_tail_status = tail_status
         
-        print('The shown status is ' + str(head_status) + ' to ' + str(tail_status))
-        
+        #print('The shown status is ' + str(head_status) + ' to ' + str(tail_status))
+        for i in range(head_status,tail_status):
+            self.snsdata[i]['show_on_screen_time'] += self.SHOW_ON_SCREEN_FREQUENCE
+            self.snsdata[i]['currentTime'] = time.strftime("%a, %d %b %Y %H:%M:%S")
         return (head_status,tail_status)
     
     def save_status_feedback(self,obj=None, value=None):
-        with open('conf/status.json', 'wb') as fd:
+        '''
+        for status in self.snsdata:
+            for sta in self.statusList:
+                if status['digest_info'] == sta['digest_info']:
+                    sta['show_on_screen_time'] = status['show_on_screen_time']
+        
+        with open('applog/status.json', 'wb') as fd:
             json.dump(self.statusList, fd,indent = 2)
-            
-    def save_depulicated_status(self,status):
+        '''
+        a = None
+        for status in self.snsdata:
+            temp_command = "select * from status_raw_data where digest ='" + status['digest_info'] +"'"
+            try:
+                self.status_sqlite3_cu.execute(temp_command)
+                a = self.status_sqlite3_cu.fetchone()
+                #print 'select the status successfully in database'
+            except sqlite3.Error,e:
+                print "Select error","\n", e.args[0]
+                continue
+            if a != None:
+                'show_on_screen_time INT, click_times INT, show_detail_times INT, like TEXT, currentTime TEXT'
+                show_on_time = a[3] + status['show_on_screen_time']
+                click_times = a[4] + status['click_times']
+                show_detail_times = a[5] + status['show_detail_times']
+                like = status['like']
+                if like == None:
+                    like = 'NULL'
+                else:
+                    like = str(like)
+                currentTime = status['currentTime']
+                if currentTime == None:
+                    currentTime = 'NULL'
+                else:
+                    currentTime = str(currentTime)
+                update_command = "UPDATE status_raw_data SET show_on_screen_time = "+str(show_on_time)+\
+                    ", click_times = "+str(click_times)+\
+                    ", show_detail_times = "+str(show_detail_times)+\
+                    ", like = '"+ like +\
+                    "', currentTime = '"+ currentTime +\
+                    "' WHERE digest = '"+ status['digest_info']+"';"
+                try:
+                    self.status_sqlite3_cu.execute(update_command)
+                    #print 'update status successfully in database'
+                except sqlite3.Error,e:
+                    print update_command
+                    print "Update status error","\n", e.args[0]
+                    continue
+            else:
+                insert_command = "insert into status_raw_data (digest, raw_data, status_id, show_on_screen_time, click_times, show_detail_times, like, currentTime) values (?,?,?,?,?,?,?,?);"
+                raw_data = cPickle.dumps(status['raw'], cPickle.HIGHEST_PROTOCOL)
+                status_id = cPickle.dumps(status['ID'], cPickle.HIGHEST_PROTOCOL)
+                like = status['like']
+                if like == None:
+                    like = 'NULL'
+                else:
+                    like = str(like)
+                currentTime = status['currentTime']
+                if currentTime == None:
+                    currentTime = 'NULL'
+                else:
+                    currentTime = str(currentTime)
+                temp_insert = (status['digest_info'],
+                               sqlite3.Binary(raw_data),
+                               sqlite3.Binary(status_id),
+                               status['show_on_screen_time'],
+                               status['click_times'],
+                               status['show_detail_times'],
+                               like,
+                               currentTime)
+                try:
+                    self.status_sqlite3_cu.execute(insert_command,temp_insert)
+                    #print 'insert status successfully in database'
+                except sqlite3.Error,e:
+                    print "Insertion Error","\n", e.args[0]
+                    continue
+        self.status_sqlite3_cx.commit()
+        Logger.system_info('No status','status database saved')
+        return
+                   
+    def save_depulicated_status_win32(self,status):
         s = shelve.open('applog/status_hash.bat')
         flag = s.has_key(status.digest())
         
@@ -485,6 +662,22 @@ class SNS(Screen):
         
         s.close()
         return
+    
+    def save_depulicated_status_android(self):
+        status_database = open('applog/status_database.pickle','wb')
+        for status in self.snsdata:
+            if status['digest_info'] in self.status_duplicate_set:
+                continue
+            else:
+                checked_status = {'ID':status['ID'],
+                                  'raw':status['raw'],
+                                  'platform':status['platform']}
+            
+                self.status_duplicate_set.add(status['digest_info'])
+                pickle.dump(checked_status, status_database)
+        
+        status_database.close()
+        return
         
 class SNSApp(App):
     
@@ -496,9 +689,9 @@ class SNSApp(App):
         Builder.load_file('layout/channel_view.kv')
         Builder.load_file('layout/channel_list_layout.kv')
         Builder.load_file('layout/post_status.kv')
-        if running_platform == 'win32':
+        if running_platform == 'win32' or 'darwin':
             Builder.load_file('layout/scrollLayoutView.kv')
-        else:
+        elif running_platform == 'linux3':
             Builder.load_file('layout/scrollLayoutView_android.kv')
         
         self.sns = SNS(name='sns')
@@ -522,7 +715,7 @@ class SNSApp(App):
         self.choose_status_index = 0
         
         # status.json
-        #Clock.schedule_interval(self.sns.save_status_feedback,5)
+        # Clock.schedule_interval(self.sns.save_status_feedback,5)
         
         time.clock()
 
@@ -532,21 +725,31 @@ class SNSApp(App):
         return root
         
     def on_stop(self):
-        #self.sns.save_status_feedback()
+        self.database_save()
         self.save_channel()
         self.save_config()
         Logger.system_info('No status','APP on_stop()')
         Logger.device_stop()
         
-    def on_pause(self):
-        Logger.system_info('No status','APP on_stop()')
+    def on_pause(self): 
+        self.databse_pause_save()
+        self.save_channel()
+        self.save_config()
+        Logger.system_info('No status','APP on_pause()')
         Logger.device_pause()
         return True
     
     def on_resume(self):
         Logger.system_info('No status','APP on_resume()')
-        pass
-
+    
+    def database_save(self):
+        self.sns.save_status_feedback()
+        self.sns.status_sqlite3_cu.close()
+        self.sns.status_sqlite3_cx.close()
+    
+    def databse_pause_save(self):
+        self.sns.save_status_feedback()
+        
     def load_channel(self):
         if not exists(self.channel_fn):
             return
@@ -714,14 +917,10 @@ class SNSApp(App):
         self.sns.snsdata = snsdata
         
     def more_status_sns(self):
-        self.sns.more_status()
-        #self.sns.remove_widget(self.sns.ids._list_status)
+        self.sns.more_status_robust()
         snsdata = self.sns.snsdata
         self.sns.snsdata = []
         self.sns.snsdata = snsdata
-        #list_adapter = ListAdapter(data=self.sns.snsdata, cls=Factory.SNSListItem, args_converter=self.sns.sns_args_converter)
-        #new_list_view = ListView(id = '_list_status', adapter = list_adapter)
-        #self.sns.add_widget(new_list_view)
         
     def refresh_channel(self):
         #self.sns.refresh_status()
@@ -772,6 +971,7 @@ class SNSApp(App):
         Logger.system_info('Popup has index ' + str(new_sns_popup.sns_index),'Popup shown')
         
         Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'Status clicked by user')
+        self.sns.snsdata[snsindex]['click_times'] += 1
         new_sns_popup.open()
         
     def show_status(self, snsindex):
@@ -783,6 +983,7 @@ class SNSApp(App):
         ID = self.sns.snsdata[snsindex]['ID']
         attachments = self.sns.snsdata[snsindex]['attachments']
         digest_info = self.sns.snsdata[snsindex]['digest_info']
+        raw = self.sns.snsdata[snsindex]['raw']
         
         Logger.status_user(digest_info,'Details of this status shown')
         
@@ -790,10 +991,11 @@ class SNSApp(App):
         #status.json
         global running_platform
         if running_platform == 'win32':
-            indexInStatusList = self.sns.getKeywords(content,name,statustime,ID,username_origin,attachments,True)
+            indexInStatusList = self.sns.getKeywords(content,name,statustime,ID,username_origin,attachments,True,digest_info,raw)
         else:
-            indexInStatusList = self.sns.getKeywords(content,name,utc2str(statustime),ID,username_origin,attachments,True)
+            indexInStatusList = self.sns.getKeywords(content,name,utc2str(statustime),ID,username_origin,attachments,True,digest_info,raw)
         '''
+        
         new_content_popup = MSSPopup(sns_index=snsindex)
         Logger.system_info('No status','New popup build')
         startTime = time.clock()
@@ -802,24 +1004,25 @@ class SNSApp(App):
                                        content,
                                        snsindex,
                                        startTime,
-                                       attachments)
+                                       attachments,
+                                       self.sns.snsdata[snsindex]['digest_info'])
         Logger.system_info('No status','Adding the attachments to the popup')
         
         new_content_popup.add_attachments()
         
         Logger.system_info('StatusMSSPopup has index ' + str(new_content_popup.sns_index),'MSSPopup Added')
-        Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'Status details popup shwon')
+        Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'Status details popup shown')
         
         new_content_popup.open()
         
         #print self.sns.snsdata[new_content_popup.sns_index]['content']
     
     def close_status(self, snsindex, starttime, like):
-        '''
-        self.sns.statusList[snsindex]['time'] += (time.clock()-starttime)
-        self.sns.statusList[snsindex]['like'] = like
         
-        with open('conf/status.json', 'wb') as fd:
+        self.sns.snsdata[snsindex]['show_detail_times'] += 1
+        self.sns.snsdata[snsindex]['like'] = like
+        '''
+        with open('applog/status.json', 'wb') as fd:
             json.dump(self.sns.statusList, fd,indent = 2)
         '''
         if like==True:
@@ -832,9 +1035,9 @@ class SNSApp(App):
         Logger.status_user(self.sns.snsdata[snsindex]['digest_info'],'Status detail popup closed')
         
     def forward_status(self, message, text):
-        Logger.status_user('No status','Forward_status to ' + self.sns.current_channel_intext)
+        Logger.status_user('No status','Forward_status to ' + message.ID.channel)
         Logger.status_user(text,'Forward status comment')
-        sp.forward(message, text, self.sns.current_channel)
+        sp.forward(message, text, message.ID.channel)
         
     def reply_status(self, message, text):
         Logger.status_user('No status','Reply_status to ' + message.ID.channel)
@@ -911,7 +1114,8 @@ class SNSApp(App):
         newHelpPopup = HelpPopup()
         newHelpPopup.open()
         
-    def open_url(self,url):
+    def open_url(self,url,digest_info=None):
+        Logger.status_user(digest_info,'Open the url in status')
         webbrowser.open(url)
         
     @property

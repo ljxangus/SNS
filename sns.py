@@ -13,6 +13,7 @@ from kivy.properties import ListProperty, StringProperty, \
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
 from kivy.uix.image import AsyncImage, Image
+import re
         
 class SNSView(Screen):
 
@@ -40,17 +41,23 @@ class MSSPopup(Popup):
     channelID = ''
     title_data = StringProperty()
     content_data= StringProperty()
+    link = StringProperty()
     sns_indexinlist = 0
     startTime = 0
     attachments = None
-    def change_index(self, index, title, content, indexinlist,start,attach=None):
+    digest_info= None
+    def change_index(self, index, title, content, indexinlist,start,attach=None,digest_informoation=None):
         self.sns_index = index
         self.title_data = title #app.sns.snsdata[index]['title']
         self.content_data = content #app.sns.snsdata[index]['content']
         self.sns_indexinlist = indexinlist
         self.startTime = start
         self.attachments = attach
-        
+        self.digest_info = digest_informoation
+        try:
+            self.link = re.search("(?P<url>https?://[^\s]+)", self.content_data).group("url")
+        except:
+            pass
         self.content_data = DividingUnicode.div(self.content_data, 20)
         
     def add_attachments(self):

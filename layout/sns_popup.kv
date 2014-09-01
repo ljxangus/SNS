@@ -40,7 +40,9 @@
 			size_hint_y:.2
 
 		Label:
-			text: root.content_data
+			text: root.content_data + '\n' + '[color=ff0099][ref=world]Click to show the link[/ref][/color]'
+			markup: True
+			on_ref_press:app.open_url(root.link,root.digest_info)
 			font_name:"fonts/DroidSansFallback.ttf"
 			#height: root.height - root.ids.popup_label.height
 			text_size:self.size
@@ -68,7 +70,7 @@
 				on_press: root.dismiss()
 			Button:
 				size_hint_y:.1
-				text:'Unlike'
+				text:'Dislike'
 				on_press: app.close_status(root.sns_indexinlist,root.startTime,False)
 				on_press: root.dismiss()
 
